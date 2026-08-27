@@ -27,7 +27,7 @@ if (-not (Test-Path $Repo)) {
 
 Set-Location $Repo
 
-Write-Host "[1/6] Repository: $Repo" -ForegroundColor Green
+Write-Host "[1/7] Repository: $Repo" -ForegroundColor Green
 
 if (-not (Test-Path ".\app.py")) {
     throw "app.py was not found in $Repo"
@@ -41,7 +41,7 @@ if (-not (Test-Path ".\requirements.txt")) {
 # Python
 # ------------------------------------------------------------
 
-Write-Host "[2/6] Checking Python..." -ForegroundColor Green
+Write-Host "[2/7] Checking Python..." -ForegroundColor Green
 
 try {
     $PythonVersion = & python --version 2>&1
@@ -64,7 +64,7 @@ if ($PythonVersion -match "Python (\d+)\.(\d+)") {
 # Virtual environment
 # ------------------------------------------------------------
 
-Write-Host "[3/6] Checking virtual environment..." -ForegroundColor Green
+Write-Host "[3/7] Checking virtual environment..." -ForegroundColor Green
 
 if (-not (Test-Path $Python)) {
     Write-Host "       Creating .venv..." -ForegroundColor Yellow
@@ -98,14 +98,41 @@ else {
 & $Activate
 
 # ------------------------------------------------------------
+# Local CI hook
+# ------------------------------------------------------------
+# Git hooks aren't tracked by git, so a fresh clone never has this installed
+# on its own -- scripts/pre-push is the only enforcement of py_compile/tests
+# on push while GitHub Actions is blocked (see README's "Local CI"). Install
+# it automatically rather than just warning, since the fix is one file copy.
+
+Write-Host "[4/7] Checking local CI hook..." -ForegroundColor Green
+
+$HookSource = Join-Path $Repo "scripts\pre-push"
+$HookDest = Join-Path $Repo ".git\hooks\pre-push"
+
+if (-not (Test-Path (Join-Path $Repo ".git"))) {
+    Write-Host "       Not a git checkout; skipping." -ForegroundColor DarkGray
+}
+elseif (Test-Path $HookDest) {
+    Write-Host "       Installed." -ForegroundColor DarkGray
+}
+elseif (Test-Path $HookSource) {
+    Copy-Item $HookSource $HookDest
+    Write-Host "       Installed $HookDest (was missing)." -ForegroundColor Yellow
+}
+else {
+    Write-Host "       WARNING: scripts\pre-push not found; local CI will not run on push." -ForegroundColor Yellow
+}
+
+# ------------------------------------------------------------
 # Dependencies
 # ------------------------------------------------------------
 
 if ($SkipDependencyInstall) {
-    Write-Host "[4/6] Skipping dependency install (-SkipDependencyInstall)." -ForegroundColor DarkGray
+    Write-Host "[5/7] Skipping dependency install (-SkipDependencyInstall)." -ForegroundColor DarkGray
 }
 else {
-    Write-Host "[4/6] Installing/updating dependencies..." -ForegroundColor Green
+    Write-Host "[5/7] Installing/updating dependencies..." -ForegroundColor Green
 
     & $Python -m pip install --upgrade pip
 
@@ -124,7 +151,7 @@ else {
 # Application validation
 # ------------------------------------------------------------
 
-Write-Host "[5/6] Validating RoleIQ..." -ForegroundColor Green
+Write-Host "[6/7] Validating RoleIQ..." -ForegroundColor Green
 
 & $Python -m py_compile ".\app.py" ".\ai_provider.py" ".\check_providers.py" ".\db_crypto.py" ".\role_schema.py"
 
@@ -138,7 +165,7 @@ Write-Host "       Source compilation: PASS" -ForegroundColor Green
 # API key
 # ------------------------------------------------------------
 
-Write-Host "[6/6] Checking AI provider configuration..." -ForegroundColor Green
+Write-Host "[7/7] Checking AI provider configuration..." -ForegroundColor Green
 
 function Read-ApiKeyIntoEnv {
     param(

@@ -137,17 +137,20 @@ without network access or an API key. CI (`.github/workflows/ci.yml`) runs
 
 ### Local CI
 
-`git hooks` aren't tracked by git, so after cloning, install the pre-push
-check once:
+`git hooks` aren't tracked by git, so a fresh clone doesn't have the
+pre-push check until something installs it. `run-roleiq.ps1` does this
+automatically on every launch (its "Checking local CI hook" step), so on
+Windows it's a non-issue. To install it manually, or on another OS:
 
 ```bash
 cp scripts/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
 ```
 
-It runs the same `py_compile` + `pytest` checks as CI and blocks the push if
-either fails — the active enforcement mechanism while GitHub Actions is
-unavailable (see CI status in the repo's Actions tab). Remote CI stays
-configured and will resume working automatically once that's resolved.
+It runs a clean-install resolve of `requirements-dev.txt`, then the same
+`py_compile` + `pytest` checks as CI, and blocks the push if any fail — the
+active enforcement mechanism while GitHub Actions is unavailable (see CI
+status in the repo's Actions tab). Remote CI stays configured and will
+resume working automatically once that's resolved.
 
 Full live UI/API execution requires installing the packages in
 `requirements.txt` and supplying an API key; see "Verifying a deployment"
