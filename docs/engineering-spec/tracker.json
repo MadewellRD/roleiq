@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T23:15:43Z",
+  "generated_at": "2026-08-27T23:18:22Z",
   "milestones": [
     {
       "id": "M1",
@@ -427,13 +427,13 @@
       "title": "Run a dependency/CVE scan against requirements.txt and record the result",
       "milestone": "M7",
       "sprint": 7,
-      "status": "todo",
+      "status": "done",
       "acceptance": "A scan result (clean or with findings) is recorded in docs/engineering-spec/, dated.",
       "depends_on": [],
       "source": "sdlc:security-threat-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. No CVE scan has ever been run against the exact pinned versions."
+      "pr": 38,
+      "evidence": "PR #38, merged eae6076. pip-audit 2.10.1 run against requirements.txt and requirements-dev.txt (full dependency tree, not just direct pins): no known vulnerabilities found in either scope. Recorded in architecture.md's new \"Dependency scan log\" table. Explicitly a point-in-time scan, not wired into CI or pre-push -- documented how to re-run after any pin bump."
     },
     {
       "id": "GL-28",
@@ -730,6 +730,12 @@
       "message": "GL-22 fix: the merged hook was silently bypassed by rich (#37)",
       "date": "2026-08-27T23:15:43Z",
       "task": "GL-22"
+    },
+    {
+      "sha": "eae6076",
+      "message": "GL-27: run a dependency/CVE scan against requirements.txt, record the result (#38)",
+      "date": "2026-08-27T23:18:22Z",
+      "task": "GL-27"
     }
   ]
 }
