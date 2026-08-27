@@ -4,3 +4,11 @@ enableXsrfProtection = true
 enableCORS = true
 headless = false
 maxUploadSize = 15
+
+[logger]
+# Rich's console traceback formatting (Streamlit's default whenever rich is
+# installed, which it always is here as a Streamlit dependency) replaces
+# Streamlit's own `_LOGGER.error("Uncaught app execution", ...)` call with a
+# console-only print -- bypassing roleiq.log's handler entirely (see GL-22 in
+# architecture.md). Disabling it is what makes that handler actually fire.
+enableRich = false

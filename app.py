@@ -45,12 +45,22 @@ logger = logging.getLogger("roleiq")
 # script runner (exec_code.py) catches it first and logs it itself, through
 # a logger that streamlit/logger.py builds with propagate=False on every
 # instance it hands out -- specifically to keep Streamlit's own messages out
-# of a host app's root handlers. Verified empirically (AppTest, an uncaught
-# top-level exception): with only the root handlers above, the message never
-# lands in roleiq.log. Attaching the same file handler directly to that named
-# logger is the fix; it uses only public logging API, no Streamlit internals.
-# Fragility, accepted: "streamlit.error_util" is Streamlit's module name, not
-# a published interface, and could change in a future Streamlit release.
+# of a host app's root handlers. Attaching this file handler directly to that
+# named logger is step one; it uses only public logging API, no Streamlit
+# internals. Fragility, accepted: "streamlit.error_util" is Streamlit's
+# module name, not a published interface, and could change in a future
+# Streamlit release.
+#
+# Step two matters just as much and is easy to miss: Streamlit's own
+# exception handler (error_util.py's _log_uncaught_app_exception) skips this
+# logger call entirely whenever rich is importable (streamlit's default,
+# since rich ships as one of its own dependencies) -- it prints a rich
+# traceback to the console instead and never touches the logging module at
+# all. .streamlit/config.toml sets logger.enableRich = false specifically so
+# this handler actually fires instead of being silently bypassed. Verified
+# empirically (AppTest, an uncaught top-level exception) both ways: with
+# enableRich left at its default, the message never lands in roleiq.log
+# despite this handler being attached; with it disabled, it does, every time.
 logging.getLogger("streamlit.error_util").addHandler(_log_file_handler)
 
 # Every `except Exception as e: st.error(str(e))` in this file (9 sites) shows
