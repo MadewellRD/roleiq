@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T23:18:22Z",
+  "generated_at": "2026-08-27T23:22:01Z",
   "milestones": [
     {
       "id": "M1",
@@ -440,13 +440,13 @@
       "title": "Document the CSP gap as an accepted risk in architecture.md",
       "milestone": "M8",
       "sprint": 8,
-      "status": "todo",
+      "status": "done",
       "acceptance": "architecture.md records the decision explicitly, matching the pattern used for other accepted-risk items.",
       "depends_on": [],
       "source": "web:web-security-secops-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. No CSP configured; risk reduced by loopback-only binding and zero unsafe_allow_html usage."
+      "pr": 39,
+      "evidence": "PR #39, merged d3c5c66. architecture.md's risk register now documents the missing CSP header as accepted, not planned. Confirmed Streamlit has no built-in CSP config option (no such key in streamlit/config.py); a real fix needs a custom Tornado handler, not worth it for a 127.0.0.1-only, single-user tool (ADR-04)."
     },
     {
       "id": "GL-29",
@@ -736,6 +736,12 @@
       "message": "GL-27: run a dependency/CVE scan against requirements.txt, record the result (#38)",
       "date": "2026-08-27T23:18:22Z",
       "task": "GL-27"
+    },
+    {
+      "sha": "d3c5c66",
+      "message": "GL-28: document the CSP gap as an accepted risk (#39)",
+      "date": "2026-08-27T23:22:01Z",
+      "task": "GL-28"
     }
   ]
 }
