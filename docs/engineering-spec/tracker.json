@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T23:39:03Z",
+  "generated_at": "2026-08-27T23:51:36Z",
   "milestones": [
     {
       "id": "M1",
@@ -479,15 +479,15 @@
       "title": "Add per-session correlation to roleiq.log entries",
       "milestone": "M8",
       "sprint": 8,
-      "status": "todo",
+      "status": "done",
       "acceptance": "Not required to block go-live; closed by adding a session id to the log format or an explicit recorded decision to defer.",
       "depends_on": [
         "GL-21"
       ],
       "source": "sdlc:observability-readiness-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Recorded by the audit as a nicety, not a defect -- still tracked, not dropped."
+      "pr": 42,
+      "evidence": "PR #42, merged fe06274. Every roleiq.log line now carries [session=<8-char id>], sourced from Streamlit's ScriptRunContext.session_id via a handler-level logging.Filter (covers both app.py's own logger and the GL-22 streamlit.error_util path). Falls back to \"-\" with no active session. Two regression tests; the second works around a real pytest gotcha (root handlers detached during test execution) by reading the filter's result via session_state instead of the real log file."
     }
   ],
   "commits": [
@@ -754,6 +754,12 @@
       "message": "GL-30: add cross-links between related wizard steps (#41)",
       "date": "2026-08-27T23:39:03Z",
       "task": "GL-30"
+    },
+    {
+      "sha": "fe06274",
+      "message": "GL-31: add per-session correlation to roleiq.log entries (#42)",
+      "date": "2026-08-27T23:51:36Z",
+      "task": "GL-31"
     }
   ]
 }
