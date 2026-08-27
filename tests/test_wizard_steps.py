@@ -65,8 +65,10 @@ def test_recommended_step_returns_first_unvisited():
     assert app.recommended_step(["a", "b", "c", "d"], {"a", "b"}) == "c"
 
 
-def test_recommended_step_all_visited_returns_last():
-    assert app.recommended_step(["a", "b"], {"a", "b"}) == "b"
+def test_recommended_step_all_visited_returns_none():
+    # Nothing left to recommend once every step has been seen -- must not
+    # collapse to "the last step," which would nudge back to it forever.
+    assert app.recommended_step(["a", "b"], {"a", "b"}) is None
 
 
 def test_recommended_step_empty_list_returns_none():
