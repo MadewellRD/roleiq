@@ -592,8 +592,15 @@ if analysis:
             if st.button("Grade transcript", key="voice_grade"):
                 comp = match_competency(analysis, st.session_state.current_question)
                 try:
-                    st.session_state.grade=grade_answer(analysis,comp,st.session_state.current_question,st.session_state.voice_transcript,persona)
-                    st.rerun()
+                    with st.spinner("Evaluating…"):
+                        grade = grade_answer(analysis, comp, st.session_state.current_question, st.session_state.voice_transcript, persona)
+                        history.append({"question":st.session_state.current_question,"answer":st.session_state.voice_transcript,"grade":grade,"competency":comp.get("name")})
+                        st.session_state.grade = grade
+                        st.session_state.next = adaptive_next(analysis, history)
+                        st.session_state.voice_transcript = None
+                        st.session_state.current_question = synthesize_question(analysis, persona, history)
+                        save_session(st.session_state.session_id, st.session_state.candidate_id, analysis.get("role",""), st.session_state.company, st.session_state.jd_text, analysis, ctx, history)
+                        st.rerun()
                 except Exception as e: logger.exception("voice_grade"); st.error(str(e))
 
     elif current_step == "sources_battle_card":
