@@ -16,6 +16,12 @@ MODEL = AI_STATUS["model"]
 ROLE_CONTEXT_ENABLED = os.getenv("RoleIQ_ROLE_CONTEXT_ENABLED", "0") == "1"
 DB_PATH = os.getenv("RoleIQ_DB", str(Path(__file__).with_name("roleiq.db")))
 
+# Upload safety caps. Keep RoleIQ_MAX_UPLOAD_MB in sync with .streamlit/config.toml's
+# [server] maxUploadSize -- raising one without the other leaves the lower cap in force.
+MAX_UPLOAD_MB = int(os.getenv("RoleIQ_MAX_UPLOAD_MB", "15"))
+MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
+MAX_PDF_PAGES = int(os.getenv("RoleIQ_MAX_PDF_PAGES", "200"))
+
 st.set_page_config(page_title=APP_TITLE, page_icon="W", layout="wide")
 
 # ---------------- persistence ----------------
@@ -72,16 +78,35 @@ def save_session(sid: str, cid: str, role: str, company: str, jd: str,
 def extract_file(uploaded) -> str:
     name = uploaded.name.lower()
     data = uploaded.getvalue()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise ValueError(f"File too large ({len(data) // 1024 // 1024} MB). Maximum is {MAX_UPLOAD_MB} MB.")
     if name.endswith((".txt", ".md")):
         return data.decode("utf-8", errors="ignore")
     if name.endswith(".pdf"):
+        import pypdf
         from pypdf import PdfReader
-        reader = PdfReader(uploaded)
-        return "\n".join((p.extract_text() or "") for p in reader.pages)
+        try:
+            reader = PdfReader(uploaded)
+            if len(reader.pages) > MAX_PDF_PAGES:
+                raise ValueError(f"PDF has too many pages (max {MAX_PDF_PAGES}).")
+            pages: List[str] = []
+            for page in reader.pages:
+                try:
+                    pages.append(page.extract_text() or "")
+                except pypdf.errors.PyPdfError:
+                    continue
+            return "\n".join(pages)
+        except pypdf.errors.PyPdfError as e:
+            raise ValueError("Could not read this PDF. It may be corrupted, password-protected, or not a valid PDF.") from e
     if name.endswith(".docx"):
+        from zipfile import BadZipFile
         from docx import Document
-        doc = Document(uploaded)
-        return "\n".join(p.text for p in doc.paragraphs)
+        from docx.opc.exceptions import PackageNotFoundError
+        try:
+            doc = Document(uploaded)
+            return "\n".join(p.text for p in doc.paragraphs)
+        except (BadZipFile, PackageNotFoundError, KeyError) as e:
+            raise ValueError("Could not read this DOCX file. It may be corrupted or not a valid Word document.") from e
     raise ValueError("Supported files: PDF, DOCX, TXT, MD")
 
 
@@ -360,13 +385,16 @@ if analysis:
             audio = st.audio_input("Record your answer")
             if audio:
                 if st.button("Process recorded answer", key="voice_process"):
+                    path = None
                     try:
                         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
                             f.write(audio.getvalue()); path=f.name
                         st.session_state.voice_transcript = ai_provider.transcribe(path)
-                        os.unlink(path)
                         st.rerun()
                     except Exception as e: st.error(str(e))
+                    finally:
+                        if path and os.path.exists(path):
+                            os.unlink(path)
         if st.session_state.get("voice_transcript"):
             st.write("**Transcript:** " + st.session_state.voice_transcript)
             if st.button("Grade transcript", key="voice_grade"):
