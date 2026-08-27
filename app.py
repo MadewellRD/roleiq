@@ -196,6 +196,21 @@ def competency_progress(ordered: List[Tuple[int, Dict[str, Any]]], trained_modul
     done = sum(1 for idx, _ in ordered if idx in trained_modules)
     return done, total
 
+
+def match_competency(analysis: Dict[str, Any], question: str) -> Dict[str, Any]:
+    """Pick the competency whose SME language appears in the question text,
+    falling back to the first competency (or {} if none exist). Shared by
+    both the typed and voice grading paths so a question is graded against
+    the same competency regardless of how the answer was given."""
+    competencies = analysis.get("competencies", [])
+    comp = competencies[0] if competencies else {}
+    q = (question or "").lower()
+    for c in competencies:
+        if any(t.lower() in q for t in c.get("sme_language", [])):
+            comp = c
+            break
+    return comp
+
 # ---------------- AI ----------------
 def client():
     """OpenAI client, kept for the OpenAI-only voice transcription path.
@@ -524,11 +539,7 @@ if analysis:
             if st.button("Grade & Continue", type="primary"):
                 if not answer.strip(): st.error("Give an answer first.")
                 else:
-                    comp = analysis.get("competencies", [{}])[0]
-                    # Prefer a competency whose SME language appears in the question.
-                    for c in analysis.get("competencies", []):
-                        if any(t.lower() in st.session_state.current_question.lower() for t in c.get("sme_language", [])):
-                            comp = c; break
+                    comp = match_competency(analysis, st.session_state.current_question)
                     try:
                         with st.spinner("Evaluating…"):
                             grade = grade_answer(analysis, comp, st.session_state.current_question, answer, persona)
@@ -579,7 +590,7 @@ if analysis:
         if st.session_state.get("voice_transcript"):
             st.write("**Transcript:** " + st.session_state.voice_transcript)
             if st.button("Grade transcript", key="voice_grade"):
-                comp=analysis.get("competencies", [{}])[0]
+                comp = match_competency(analysis, st.session_state.current_question)
                 try:
                     st.session_state.grade=grade_answer(analysis,comp,st.session_state.current_question,st.session_state.voice_transcript,persona)
                     st.rerun()
