@@ -601,7 +601,8 @@ if analysis:
                     try:
                         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
                             f.write(audio.getvalue()); path=f.name
-                        st.session_state.voice_transcript = ai_provider.transcribe(path)
+                        with st.spinner("Transcribing…"):
+                            st.session_state.voice_transcript = ai_provider.transcribe(path)
                         st.rerun()
                     except Exception as e: logger.exception("voice_transcribe"); st.error(str(e))
                     finally:
@@ -627,7 +628,9 @@ if analysis:
         st.markdown("### Evidence-backed technical sources")
         topic = st.text_input("Research a technical claim/topic", placeholder="e.g. MCP tool orchestration, RAG evaluation")
         if st.button("Find authoritative sources") and topic.strip():
-            try: st.session_state.sources = sources_for_topic(topic.strip())
+            try:
+                with st.spinner("Researching…"):
+                    st.session_state.sources = sources_for_topic(topic.strip())
             except Exception as e: logger.exception("sources_for_topic"); st.error(str(e))
         for s in st.session_state.get("sources", {}).get("claims", []):
             st.markdown(f"**{s.get('claim','')}** — [{s.get('source','source')}]({s.get('url','#')})")
