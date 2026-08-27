@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T22:57:40Z",
+  "generated_at": "2026-08-27T23:01:18Z",
   "milestones": [
     {
       "id": "M1",
@@ -414,13 +414,13 @@
       "title": "Add a Troubleshooting section to README.md (doubles as minimal incident-response self-diagnosis path)",
       "milestone": "M7",
       "sprint": 7,
-      "status": "todo",
+      "status": "done",
       "acceptance": "README.md has a Troubleshooting section covering the 2-3 most likely local-launch failures, pointing at roleiq.log and check_providers.py first.",
       "depends_on": [],
       "source": "sdlc:deployment-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Also raised by sdlc:incident-response-desk."
+      "pr": 36,
+      "evidence": "PR #36, merged 0bae500. README.md now has a Troubleshooting section with 10 entries (missing/misconfigured keys, throwaway DB key data loss, ContractError, upload caps, GL-24 timeout behavior, voice-tab absence, pre-push hook's three checks, GL-22 uncaught-exception logging), each tied to a real handled failure mode, not generic advice."
     },
     {
       "id": "GL-27",
@@ -718,6 +718,12 @@
       "message": "GL-25: add a version string to the app (#35)",
       "date": "2026-08-27T22:57:40Z",
       "task": "GL-25"
+    },
+    {
+      "sha": "0bae500",
+      "message": "GL-26: add a Troubleshooting section to README.md (#36)",
+      "date": "2026-08-27T23:01:18Z",
+      "task": "GL-26"
     }
   ]
 }
