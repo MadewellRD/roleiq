@@ -657,3 +657,5 @@ if analysis:
 
 else:
     st.info("Start with a JD and resume. RoleIQ will build a persistent Experience Graph, resolve role/company context, model interviewer behavior, train SME fluency, and adapt interview practice to your answer history.")
+    _preview_labels = [label for _key, label in build_steps(ROLE_CONTEXT_ENABLED)]
+    st.caption("After Build: " + " → ".join(_preview_labels))
