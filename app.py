@@ -1,4 +1,4 @@
-import contextlib, os, re, json, sqlite3, hashlib, textwrap, tempfile, logging
+import contextlib, os, re, json, sqlite3, hashlib, textwrap, tempfile, logging, logging.handlers
 from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -31,7 +31,11 @@ logging.basicConfig(
     level=os.getenv("RoleIQ_LOG_LEVEL", "INFO"),
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     handlers=[
-        logging.FileHandler(Path(__file__).with_name("roleiq.log"), encoding="utf-8"),
+        # 5MB per file, 3 backups kept (roleiq.log, .1, .2, .3) -- ~20MB ceiling
+        # total, so a long-running local install can't grow this unbounded.
+        logging.handlers.RotatingFileHandler(
+            Path(__file__).with_name("roleiq.log"), maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+        ),
         logging.StreamHandler(),
     ],
 )
