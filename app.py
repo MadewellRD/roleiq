@@ -10,6 +10,7 @@ load_dotenv()
 
 import ai_provider
 import db_crypto
+import role_schema
 
 APP_TITLE = "RoleIQ"
 AI_STATUS = ai_provider.status()
@@ -272,7 +273,11 @@ with st.sidebar:
     st.caption("Persistence: local SQLite")
     st.caption("Role Context Plane: deferred by default (enable with RoleIQ_ROLE_CONTEXT_ENABLED=1)")
     if AI_STATUS["connected"]:
-        st.success(f"AI connected — {AI_STATUS['provider_label']}")
+        if st.session_state.get("provider_healthy"):
+            st.success(f"Provider healthy — {AI_STATUS['provider_label']}")
+        else:
+            st.success(f"Provider configured — {AI_STATUS['provider_label']}")
+            st.caption("Configured means a key is present, not that a call has succeeded yet.")
         if AI_STATUS["both_keys"]:
             st.caption("Both keys present; Anthropic takes precedence.")
     else:
@@ -301,6 +306,9 @@ if st.button("Build RoleIQ Role Model", type="primary", use_container_width=True
             with st.status("Building RoleIQ context…", expanded=True) as status:
                 st.write("Building persistent Experience Graph…")
                 graph = build_experience_graph(clean_text(resume_text))
+                # A response actually came back from the provider -- distinct
+                # from AI_STATUS["connected"], which only means a key is set.
+                st.session_state.provider_healthy = True
                 cid = save_candidate(clean_text(resume_text), "Candidate", graph)
                 provisional_role = role_hint or "Target role"
                 if ROLE_CONTEXT_ENABLED:
@@ -311,6 +319,7 @@ if st.button("Build RoleIQ Role Model", type="primary", use_container_width=True
                     ctx = {"company_context": [], "technical_stack_signals": [], "engineering_culture_signals": [], "role_specific_signals": [], "likely_interview_themes": [], "sources": [], "inferences": [], "status": "deferred"}
                 st.write("Mapping JD competencies to candidate evidence…")
                 analysis = analyze(clean_text(jd_text), clean_text(resume_text), graph, company, ctx)
+                analysis = role_schema.validate_analysis(analysis, AI_STATUS["provider_label"], MODEL)
                 st.write("Modeling likely interviewer behavior…")
                 persona = interviewer_model(analysis, ctx, company)
                 sid = hashlib.sha256((cid + clean_text(jd_text)).encode()).hexdigest()[:16]
@@ -319,6 +328,10 @@ if st.button("Build RoleIQ Role Model", type="primary", use_container_width=True
                     "persona":persona,"history":[],"module":None,"grade":None,"next":None})
                 save_session(sid,cid,analysis.get("role",provisional_role),company,jd_text,analysis,ctx,[])
                 status.update(label="RoleIQ role model ready", state="complete")
+        except role_schema.ContractError as e:
+            logger.exception("build_role_model:contract")
+            st.error("The model returned valid JSON, but not in RoleIQ's expected shape. Retry the build -- if it keeps happening, the diagnostic below is what to report.")
+            st.code(str(e))
         except Exception as e: logger.exception("build_role_model"); st.error(str(e))
 
 analysis = st.session_state.get("analysis")

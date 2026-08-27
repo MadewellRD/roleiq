@@ -84,6 +84,25 @@ naming the limit and the env var to raise, instead of a `JSONDecodeError`
 pointing at a column number. Defaults: `RoleIQ_JSON_MAX_TOKENS=16000`,
 `RoleIQ_MAX_TOKENS=7000`.
 
+### Valid JSON is not valid RoleIQ data
+
+`ai_json()` guarantees the reply parses as JSON. It does not guarantee the
+reply has the fields RoleIQ actually asked for — the Anthropic tool schema is
+deliberately permissive (`additionalProperties: true`) because its shape
+differs per call site, so nothing at the API level enforces `analyze()`'s
+requested `competencies`/`training_priorities`/etc. Without a check, a
+technically-valid-but-wrong-shaped reply used to render as an empty UI
+section instead of a visible failure.
+
+`role_schema.py` closes that gap for the role-analysis payload: it normalizes
+a small set of known key variants (`summary` → `executive_summary`,
+`competency_graph` → `competencies`, and similar — never overwriting a
+correctly-named field, never inventing a value), then validates against a
+Pydantic model requiring at least one competency. A contract mismatch raises
+`ContractError` with a diagnostic — expected fields, the keys actually
+returned, provider, and model — shown directly in the UI instead of a blank
+section.
+
 ## Verifying a deployment
 
 ```bash

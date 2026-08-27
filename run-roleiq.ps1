@@ -126,7 +126,7 @@ else {
 
 Write-Host "[5/6] Validating RoleIQ..." -ForegroundColor Green
 
-& $Python -m py_compile ".\app.py" ".\ai_provider.py" ".\check_providers.py" ".\db_crypto.py"
+& $Python -m py_compile ".\app.py" ".\ai_provider.py" ".\check_providers.py" ".\db_crypto.py" ".\role_schema.py"
 
 if ($LASTEXITCODE -ne 0) {
     throw "Python compilation failed. RoleIQ was not started."
