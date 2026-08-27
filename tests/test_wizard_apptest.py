@@ -69,7 +69,7 @@ def _isolated_db(tmp_path, monkeypatch):
 def _build(at):
     at.session_state["jd_text"] = "We need a backend engineer with distributed systems and SQL experience. " * 5
     at.session_state["resume_text"] = "Senior backend engineer, 8 years building distributed systems at scale. " * 5
-    build_btn = [b for b in at.button if b.label == "Build RoleIQ Role Model"][0]
+    build_btn = [b for b in at.button if b.label == "Build RoleIQ role model"][0]
     build_btn.click().run(timeout=30)
     assert not at.exception, f"build raised: {at.exception}"
     return at
@@ -107,7 +107,7 @@ def test_sme_training_locks_by_interview_risk_then_unlocks_in_order():
     caption_text = " ".join(c.value for c in at.caption)
     assert "Locked" in caption_text and "SQL" in caption_text
 
-    train_btn = [b for b in at.button if b.label == "Generate SME Module"][0]
+    train_btn = [b for b in at.button if b.label == "Generate SME module"][0]
     train_btn.click().run(timeout=30)
     assert not at.exception
     assert 0 in at.session_state["trained_modules"]
@@ -135,7 +135,7 @@ def test_grade_and_continue_persists_to_history():
     at.run(timeout=30)
 
     at.session_state["answer_box"] = "We used Raft for consensus across replicas."
-    grade_btn = [b for b in at.button if b.label == "Grade & Continue"][0]
+    grade_btn = [b for b in at.button if b.label == "Grade & continue"][0]
     grade_btn.click().run(timeout=30)
     assert not at.exception
 

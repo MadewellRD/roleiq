@@ -311,6 +311,9 @@ def synthesize_question(analysis, persona, history) -> str:
     return ai_call(system, f"ANALYSIS:{_wrap_untrusted('analysis', json.dumps(analysis))}\nPERSONA:{_wrap_untrusted('persona', json.dumps(persona))}\nHISTORY:{_wrap_untrusted('history', json.dumps(history[-8:]))}", max_tokens=500)
 
 # ---------------- UI ----------------
+# Button/label casing: sentence case ("Generate battle card"), with product
+# names and acronyms kept capitalized (RoleIQ, JD, SME, Markdown). Single-word
+# nav labels (Back, Next) are valid under either convention and left as-is.
 st.markdown("# RoleIQ")
 st.caption("Walk the Walk. Talk the Talk. — role immersion, SME fluency, adaptive interview preparation.")
 
@@ -347,11 +350,11 @@ with col1:
         except Exception as e: logger.exception("extract_file:jd"); st.error(str(e))
 with col2:
     resume_text = st.text_area("Current Resume", value=resume_default, height=330, placeholder="Paste your resume here…")
-    if resume_file and st.button("Load Resume file"):
+    if resume_file and st.button("Load resume file"):
         try: st.session_state.resume_text = clean_text(extract_file(resume_file)); st.rerun()
         except Exception as e: logger.exception("extract_file:resume"); st.error(str(e))
 
-if st.button("Build RoleIQ Role Model", type="primary", use_container_width=True):
+if st.button("Build RoleIQ role model", type="primary", use_container_width=True):
     if len(jd_text.strip()) < 200: st.error("The JD is too short.")
     elif len(resume_text.strip()) < 100: st.error("The resume is too short.")
     else:
@@ -522,7 +525,7 @@ if analysis:
             if trained_done < trained_total:
                 current_idx, current_comp = ordered_comps[trained_done]
                 st.markdown(f"### Generate module: {current_comp.get('name', '')}")
-                if st.button("Generate SME Module", key="train"):
+                if st.button("Generate SME module", key="train"):
                     try:
                         with st.spinner("Building module…"):
                             st.session_state.trained_modules[current_idx] = training_module(analysis, current_comp, ctx)
@@ -543,7 +546,7 @@ if analysis:
         answer = st.text_area("Your answer", height=190, key="answer_box", placeholder="Answer naturally. The system is evaluating reasoning, not memorization.")
         c1,c2 = st.columns(2)
         with c1:
-            if st.button("Grade & Continue", type="primary"):
+            if st.button("Grade & continue", type="primary"):
                 if not answer.strip(): st.error("Give an answer first.")
                 else:
                     comp = match_competency(analysis, st.session_state.current_question)
@@ -558,7 +561,7 @@ if analysis:
                             st.rerun()
                     except Exception as e: logger.exception("grade_answer"); st.error(str(e))
         with c2:
-            if st.button("Next Question"):
+            if st.button("Next question"):
                 st.session_state.current_question = synthesize_question(analysis, persona, history)
                 st.rerun()
         g = st.session_state.get("grade")
