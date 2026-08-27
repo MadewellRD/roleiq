@@ -1,8 +1,12 @@
 #requires -Version 7.0
 
+param(
+    [switch] $SkipDependencyInstall
+)
+
 $ErrorActionPreference = "Stop"
 
-$Repo = "D:\dev\roleiq"
+$Repo = $PSScriptRoot
 $Venv = Join-Path $Repo ".venv"
 $Python = Join-Path $Venv "Scripts\python.exe"
 $Activate = Join-Path $Venv "Scripts\Activate.ps1"
@@ -48,6 +52,14 @@ catch {
 
 Write-Host "       $PythonVersion"
 
+if ($PythonVersion -match "Python (\d+)\.(\d+)") {
+    $Major = [int]$Matches[1]
+    $Minor = [int]$Matches[2]
+    if ($Major -ne 3 -or $Minor -lt 11) {
+        Write-Host "       WARNING: RoleIQ is validated on Python 3.11+; found $PythonVersion. Continuing." -ForegroundColor Yellow
+    }
+}
+
 # ------------------------------------------------------------
 # Virtual environment
 # ------------------------------------------------------------
@@ -75,25 +87,37 @@ if (-not (Test-Path $Activate)) {
     throw "Virtual environment activation script not found: $Activate"
 }
 
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+$CurrentPolicy = Get-ExecutionPolicy -Scope Process
+if ($CurrentPolicy -in @("Restricted", "AllSigned", "Default")) {
+    Write-Host "       Process execution policy is $CurrentPolicy; allowing script execution for this process only." -ForegroundColor Yellow
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+}
+else {
+    Write-Host "       Process execution policy is $CurrentPolicy; no bypass needed." -ForegroundColor DarkGray
+}
 & $Activate
 
 # ------------------------------------------------------------
 # Dependencies
 # ------------------------------------------------------------
 
-Write-Host "[4/6] Installing/updating dependencies..." -ForegroundColor Green
-
-& $Python -m pip install --upgrade pip
-
-if ($LASTEXITCODE -ne 0) {
-    throw "pip upgrade failed."
+if ($SkipDependencyInstall) {
+    Write-Host "[4/6] Skipping dependency install (-SkipDependencyInstall)." -ForegroundColor DarkGray
 }
+else {
+    Write-Host "[4/6] Installing/updating dependencies..." -ForegroundColor Green
 
-& $Python -m pip install -r ".\requirements.txt"
+    & $Python -m pip install --upgrade pip
 
-if ($LASTEXITCODE -ne 0) {
-    throw "Dependency installation failed."
+    if ($LASTEXITCODE -ne 0) {
+        throw "pip upgrade failed."
+    }
+
+    & $Python -m pip install -r ".\requirements.txt"
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Dependency installation failed."
+    }
 }
 
 # ------------------------------------------------------------
@@ -102,13 +126,13 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "[5/6] Validating RoleIQ..." -ForegroundColor Green
 
-& $Python -m py_compile ".\app.py"
+& $Python -m py_compile ".\app.py" ".\ai_provider.py" ".\check_providers.py" ".\db_crypto.py"
 
 if ($LASTEXITCODE -ne 0) {
     throw "Python compilation failed. RoleIQ was not started."
 }
 
-Write-Host "       app.py compilation: PASS" -ForegroundColor Green
+Write-Host "       Source compilation: PASS" -ForegroundColor Green
 
 # ------------------------------------------------------------
 # API key
