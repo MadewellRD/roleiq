@@ -33,10 +33,45 @@ _log_file_handler = logging.handlers.RotatingFileHandler(
     # total, so a long-running local install can't grow this unbounded.
     Path(__file__).with_name("roleiq.log"), maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
 )
+
+
+class _SessionIdFilter(logging.Filter):
+    """Stamp every record with Streamlit's own per-browser-session id.
+
+    This is Streamlit's internal ScriptRunContext.session_id, not the
+    app-level `sid`/`session_id` computed in the Build handler (that one
+    doesn't exist until Build succeeds, so it can't correlate an error that
+    happens before or during Build itself -- extract_file, build_role_model).
+    Truncated to 8 chars: still effectively unique for a single-user local
+    tool's log volume, and far more legible than a full UUID on every line.
+    A handler-level filter (not a per-logger one) is required here, not just
+    convenient: this same handler also receives streamlit.error_util's
+    records directly (see below), which never pass through this file's own
+    `logger` at all, so a logger-level filter would miss them and the
+    formatter's %(session_id)s would raise KeyError on those records.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        session_id = "-"
+        try:
+            from streamlit.runtime.scriptrunner import get_script_run_ctx
+            ctx = get_script_run_ctx()
+            if ctx:
+                session_id = ctx.session_id[:8]
+        except Exception:
+            pass
+        record.session_id = session_id
+        return True
+
+
+_log_file_handler.addFilter(_SessionIdFilter())
+_console_handler = logging.StreamHandler()
+_console_handler.addFilter(_SessionIdFilter())
+
 logging.basicConfig(
     level=os.getenv("RoleIQ_LOG_LEVEL", "INFO"),
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    handlers=[_log_file_handler, logging.StreamHandler()],
+    format="%(asctime)s %(levelname)s %(name)s [session=%(session_id)s]: %(message)s",
+    handlers=[_log_file_handler, _console_handler],
 )
 logger = logging.getLogger("roleiq")
 
