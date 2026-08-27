@@ -379,7 +379,8 @@ if st.button("Build RoleIQ Role Model", type="primary", use_container_width=True
                 st.session_state.update({"candidate_id":cid,"session_id":sid,"jd_text":jd_text,"resume_text":resume_text,
                     "company":company,"role_hint":role_hint,"graph":graph,"context":ctx,"analysis":analysis,
                     "persona":persona,"history":[],"grade":None,"next":None,
-                    "trained_modules":{},"wizard_step":build_steps(ROLE_CONTEXT_ENABLED)[0][0],"wizard_visited":set()})
+                    "trained_modules":{},"wizard_step":build_steps(ROLE_CONTEXT_ENABLED)[0][0],"wizard_visited":set(),
+                    "current_question":analysis.get("likely_questions", ["Walk me through your approach."])[0]})
                 save_session(sid,cid,analysis.get("role",provisional_role),company,jd_text,analysis,ctx,[])
                 status.update(label="RoleIQ role model ready", state="complete")
         except role_schema.ContractError as e:
