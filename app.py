@@ -27,19 +27,30 @@ MAX_PDF_PAGES = int(os.getenv("RoleIQ_MAX_PDF_PAGES", "200"))
 # Error/exception logging only -- never full prompt/response bodies or secrets.
 # roleiq.log is NOT encrypted the way roleiq.db is; logging full request
 # content here would recreate the plaintext exposure the DB encryption closes.
+_log_file_handler = logging.handlers.RotatingFileHandler(
+    # 5MB per file, 3 backups kept (roleiq.log, .1, .2, .3) -- ~20MB ceiling
+    # total, so a long-running local install can't grow this unbounded.
+    Path(__file__).with_name("roleiq.log"), maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+)
 logging.basicConfig(
     level=os.getenv("RoleIQ_LOG_LEVEL", "INFO"),
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    handlers=[
-        # 5MB per file, 3 backups kept (roleiq.log, .1, .2, .3) -- ~20MB ceiling
-        # total, so a long-running local install can't grow this unbounded.
-        logging.handlers.RotatingFileHandler(
-            Path(__file__).with_name("roleiq.log"), maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
-        ),
-        logging.StreamHandler(),
-    ],
+    handlers=[_log_file_handler, logging.StreamHandler()],
 )
 logger = logging.getLogger("roleiq")
+
+# An uncaught exception in this file's own code (outside every try/except
+# below) never reaches sys.excepthook or the root logger above: Streamlit's
+# script runner (exec_code.py) catches it first and logs it itself, through
+# a logger that streamlit/logger.py builds with propagate=False on every
+# instance it hands out -- specifically to keep Streamlit's own messages out
+# of a host app's root handlers. Verified empirically (AppTest, an uncaught
+# top-level exception): with only the root handlers above, the message never
+# lands in roleiq.log. Attaching the same file handler directly to that named
+# logger is the fix; it uses only public logging API, no Streamlit internals.
+# Fragility, accepted: "streamlit.error_util" is Streamlit's module name, not
+# a published interface, and could change in a future Streamlit release.
+logging.getLogger("streamlit.error_util").addHandler(_log_file_handler)
 
 # Every `except Exception as e: st.error(str(e))` in this file (9 sites) shows
 # the exception message verbatim, deliberately, not by omission: the
