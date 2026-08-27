@@ -455,6 +455,14 @@ if analysis:
     trained_modules = st.session_state.setdefault("trained_modules", {})
     trained_done, trained_total = competency_progress(ordered_comps, trained_modules)
 
+    _pending = st.session_state.pop("_pending_wizard_step", None)
+    if _pending is not None:
+        # A cross-link button set this from inside a step body -- after the
+        # wizard_step-keyed widget below has already been instantiated once
+        # this run, so it can't write wizard_step directly (same constraint
+        # Back/Next avoid by running before that widget). Apply it here,
+        # before the widget renders.
+        st.session_state.wizard_step = _pending
     if st.session_state.get("wizard_step") not in step_keys:
         st.session_state.wizard_step = step_keys[0]
     st.session_state.setdefault("wizard_visited", set())
@@ -497,6 +505,10 @@ if analysis:
     current_step = st.session_state.wizard_step
     st.session_state.wizard_visited.add(current_step)
 
+    def _goto_step(step_key: str) -> None:
+        st.session_state._pending_wizard_step = step_key
+        st.rerun()
+
     if current_step == "readiness_map":
         # Same interview-risk-first order as SME Training (ordered_competencies),
         # rather than whatever order the model happened to return -- the two
@@ -514,6 +526,8 @@ if analysis:
                 with b: st.write("**SME language:** " + ", ".join(c.get("sme_language", [])))
         st.markdown("**Training priorities**")
         for x in analysis.get("training_priorities", []): st.write("• " + x)
+        if "sme_training" in step_keys and st.button("Go to SME Training →", key="link_to_sme_training"):
+            _goto_step("sme_training")
 
     elif current_step == "role_context":
         if ctx.get("status") == "deferred":
@@ -535,6 +549,8 @@ if analysis:
                 st.write("**Outcomes:** " + "; ".join(r.get("outcomes", [])))
         st.markdown("**Capabilities**")
         st.write(", ".join(graph.get("capabilities", [])))
+        if st.button("← Back to Readiness Map", key="link_to_readiness_map"):
+            _goto_step("readiness_map")
 
     elif current_step == "sme_training":
         if not ordered_comps:
@@ -576,6 +592,8 @@ if analysis:
                     except Exception as e: logger.exception("training_module"); st.error(str(e))
             else:
                 st.success("All competencies trained.")
+                if st.button("Start Interview practice →", key="link_to_interview"):
+                    _goto_step("interview")
 
     elif current_step == "interview":
         st.markdown("### Interviewer model")
@@ -656,6 +674,8 @@ if analysis:
                         save_session(st.session_state.session_id, st.session_state.candidate_id, analysis.get("role",""), st.session_state.company, st.session_state.jd_text, analysis, ctx, history)
                         st.rerun()
                 except Exception as e: logger.exception("voice_grade"); st.error(str(e))
+        if history and st.button("Research sources & build battle card →", key="link_to_sources_battle_card"):
+            _goto_step("sources_battle_card")
 
     elif current_step == "sources_battle_card":
         st.markdown("### Evidence-backed technical sources")
