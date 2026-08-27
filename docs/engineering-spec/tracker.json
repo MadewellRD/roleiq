@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T22:47:34Z",
+  "generated_at": "2026-08-27T22:53:34Z",
   "milestones": [
     {
       "id": "M1",
@@ -363,13 +363,13 @@
       "title": "Set an explicit timeout on both AI provider clients",
       "milestone": "M6",
       "sprint": 6,
-      "status": "todo",
+      "status": "done",
       "acceptance": "A simulated hung call is bounded by the timeout and raises a message distinguishable from a generic ProviderError.",
       "depends_on": [],
       "source": "web:web-performance-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Also raised by web:backend-integration-desk. Neither openai_client() nor anthropic_client() sets a timeout."
+      "pr": 34,
+      "evidence": "PR #34, merged cfb8a69. Both openai.OpenAI and anthropic.Anthropic now constructed with timeout=RoleIQ_AI_TIMEOUT_SECONDS (default 60s). Verified with a simulated hung call (local TCP server, never replies): OpenAI client raised APITimeoutError in ~1.6s, Anthropic in ~0.5s -- neither is a ProviderError instance. Three regression tests (tests/test_provider_timeout.py)."
     },
     {
       "id": "GL-25",
@@ -706,6 +706,12 @@
       "message": "GL-23: add a clean-install check to scripts/pre-push (#33)",
       "date": "2026-08-27T22:47:34Z",
       "task": "GL-23"
+    },
+    {
+      "sha": "cfb8a69",
+      "message": "GL-24: set an explicit timeout on both AI provider clients (#34)",
+      "date": "2026-08-27T22:53:34Z",
+      "task": "GL-24"
     }
   ]
 }
