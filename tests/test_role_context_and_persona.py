@@ -96,7 +96,7 @@ def _isolated_db(tmp_path, monkeypatch):
 def _build(at):
     at.session_state["jd_text"] = "We need an engineer with distributed systems experience for this role. " * 5
     at.session_state["resume_text"] = "Senior engineer with distributed systems background over many years. " * 5
-    build_btn = [b for b in at.button if b.label == "Build RoleIQ Role Model"][0]
+    build_btn = [b for b in at.button if b.label == "Build RoleIQ role model"][0]
     build_btn.click().run(timeout=30)
     assert not at.exception, f"build raised: {at.exception}"
 
