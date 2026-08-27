@@ -13,6 +13,7 @@ import db_crypto
 import role_schema
 
 APP_TITLE = "RoleIQ"
+APP_VERSION = "1.93.0"
 AI_STATUS = ai_provider.status()
 MODEL = AI_STATUS["model"]
 ROLE_CONTEXT_ENABLED = os.getenv("RoleIQ_ROLE_CONTEXT_ENABLED", "0") == "1"
@@ -344,7 +345,7 @@ def synthesize_question(analysis, persona, history) -> str:
 # names and acronyms kept capitalized (RoleIQ, JD, SME, Markdown). Single-word
 # nav labels (Back, Next) are valid under either convention and left as-is.
 st.markdown("# RoleIQ")
-st.caption("Walk the Walk. Talk the Talk. — role immersion, SME fluency, adaptive interview preparation.")
+st.caption(f"Walk the Walk. Talk the Talk. — role immersion, SME fluency, adaptive interview preparation. (v{APP_VERSION})")
 
 with st.sidebar:
     st.subheader("Role inputs")

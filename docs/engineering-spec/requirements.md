@@ -32,7 +32,7 @@ Derived from what is built and verified working (Phase 0):
 - **NF2 — Local-only network exposure.** The Streamlit server binds to `127.0.0.1` only; no remote access is a supported configuration today.
 - **NF3 — No plaintext sensitive data at rest.** Resume, JD, analysis, and interview-history columns are encrypted; only short metadata (ids, role, company, timestamps) is plain.
 - **NF4 — No silent contract failures.** A structurally invalid AI response must surface as a visible, diagnosable error, never as an empty UI section.
-- **NF5 — Deterministic, offline-testable core logic.** The pure logic (candidate ID hashing, provider selection, JSON repair, file extraction, competency ordering, wizard step derivation) must be unit-testable without network access or an API key. 87 such tests exist and pass as of this writing (`pytest -q`).
+- **NF5 — Deterministic, offline-testable core logic.** The pure logic (candidate ID hashing, provider selection, JSON repair, file extraction, competency ordering, wizard step derivation) must be unit-testable without network access or an API key. 89 such tests exist and pass as of this writing (`pytest -q`).
 - **NF6 — Local CI enforcement.** Every push is checked by `py_compile` + the full test suite before it leaves the machine, independent of whether remote CI is reachable.
 
 ## Acceptance criteria
