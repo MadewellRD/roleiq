@@ -1,5 +1,7 @@
 # RoleIQ — Walk the Walk. Talk the Talk.
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 RoleIQ is a role-specific SME immersion and interview-preparation MVP.
 
 ## V1 architecture
@@ -90,3 +92,7 @@ both the OpenAI Responses API and the Anthropic Messages API, `pause_turn`
 continuation, JSON extraction against prose-wrapped and truncated replies, the
 repair pass, and every fallback branch. Full live UI/API execution requires
 installing the packages in `requirements.txt` and supplying an API key.
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE).
