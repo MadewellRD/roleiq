@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T21:37:44Z",
+  "generated_at": "2026-08-27T22:14:04Z",
   "milestones": [
     {
       "id": "M1",
@@ -272,52 +272,52 @@
       "title": "Add testable Given/observable acceptance criteria to every requirement in requirements.md",
       "milestone": "M5",
       "sprint": 5,
-      "status": "todo",
+      "status": "done",
       "acceptance": "Every F/NF requirement ID has at least one testable criterion line.",
       "depends_on": [],
       "source": "sdlc:product-requirements-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Also raised by web:site-product-requirements-desk."
+      "pr": 27,
+      "evidence": "PR #27, merged 2d075cb. One Given/observable line per F/NF requirement."
     },
     {
       "id": "GL-18",
       "title": "Add a risk register with likelihood/impact and mitigations to requirements.md/architecture.md",
       "milestone": "M5",
       "sprint": 5,
-      "status": "todo",
+      "status": "done",
       "acceptance": "A risks section lists at minimum the risks already surfaced this phase (CI billing lock, wizard test gap, no-PR history, key-loss-is-unrecoverable) scored by likelihood/impact with a mitigation per risk.",
       "depends_on": [],
       "source": "sdlc:technical-discovery-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Also raised by sdlc:architecture-design-desk, sdlc:product-requirements-desk."
+      "pr": 28,
+      "evidence": "PR #28, merged 2842841. Risk register with likelihood/impact/mitigation added to architecture.md."
     },
     {
       "id": "GL-19",
       "title": "Fix competency-ordering inconsistency between Readiness Map and SME Training",
       "milestone": "M5",
       "sprint": 5,
-      "status": "todo",
+      "status": "done",
       "acceptance": "Either both steps use the same order, or Readiness Map states the order it uses.",
       "depends_on": [],
       "source": "web:information-architecture-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Readiness Map uses model order; SME Training re-sorts by interview_risk."
+      "pr": 29,
+      "evidence": "PR #29, merged e1f0285. Readiness Map now uses ordered_competencies(), same order as SME Training."
     },
     {
       "id": "GL-20",
       "title": "Add a brief pre-Build preview of the wizard's step structure",
       "milestone": "M5",
       "sprint": 5,
-      "status": "todo",
+      "status": "done",
       "acceptance": "The six post-Build steps are named somewhere visible before Build is clicked.",
       "depends_on": [],
       "source": "web:information-architecture-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started."
+      "pr": 30,
+      "evidence": "PR #30, merged 5d6c0e4. Pre-Build caption lists the six steps, sourced from build_steps() so it cannot drift."
     },
     {
       "id": "GL-21",
@@ -664,6 +664,30 @@
       "message": "Give the Recommended-next banner an all-steps-visited terminal state (#26)",
       "date": "2026-08-27T21:37:44Z",
       "task": "GL-16"
+    },
+    {
+      "sha": "2d075cb",
+      "message": "Add testable acceptance criteria to every requirement (#27)",
+      "date": "2026-08-27T21:51:10Z",
+      "task": "GL-17"
+    },
+    {
+      "sha": "2842841",
+      "message": "Add a risk register with likelihood/impact and mitigations (#28)",
+      "date": "2026-08-27T21:57:22Z",
+      "task": "GL-18"
+    },
+    {
+      "sha": "e1f0285",
+      "message": "Align Readiness Map's competency order with SME Training's (#29)",
+      "date": "2026-08-27T22:04:23Z",
+      "task": "GL-19"
+    },
+    {
+      "sha": "5d6c0e4",
+      "message": "Add a pre-Build preview of the wizard's step structure (#30)",
+      "date": "2026-08-27T22:14:04Z",
+      "task": "GL-20"
     }
   ]
 }
