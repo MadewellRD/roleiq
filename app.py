@@ -1,4 +1,4 @@
-import os, re, json, sqlite3, hashlib, textwrap, tempfile
+import contextlib, os, re, json, sqlite3, hashlib, textwrap, tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import ai_provider
+import db_crypto
 
 APP_TITLE = "RoleIQ"
 AI_STATUS = ai_provider.status()
@@ -24,7 +25,16 @@ MAX_PDF_PAGES = int(os.getenv("RoleIQ_MAX_PDF_PAGES", "200"))
 
 st.set_page_config(page_title=APP_TITLE, page_icon="W", layout="wide")
 
+_db_parent = Path(DB_PATH).expanduser().resolve().parent
+if not _db_parent.is_dir():
+    st.error(f"RoleIQ_DB directory does not exist: {_db_parent}")
+    st.stop()
+
 # ---------------- persistence ----------------
+# resume/experience_graph/jd/analysis/context/history hold real narrative
+# content (candidate PII, interview transcripts) and are encrypted at rest via
+# db_crypto (RoleIQ_DB_KEY). id/name/candidate_id/role/company/timestamps are
+# short metadata, not the sensitive content this is guarding, and stay plain.
 def db():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
@@ -42,37 +52,56 @@ def db():
 
 
 def candidate_id(resume: str) -> str:
+    # Content-derived, not random: re-saving the same resume text updates the
+    # same row instead of creating a duplicate. Intentional dedup convenience
+    # for RoleIQ's single-user local usage model, not a bug -- two different
+    # people producing byte-identical resume text is not a realistic collision
+    # this app needs to defend against.
     return hashlib.sha256(clean_text(resume).encode()).hexdigest()[:16]
 
 
 def save_candidate(resume: str, name: str, graph: Dict[str, Any]):
     cid = candidate_id(resume)
     now = datetime.utcnow().isoformat()
-    conn = db()
-    conn.execute("""INSERT INTO candidates(id,name,resume,experience_graph,created_at,updated_at)
-                    VALUES(?,?,?,?,?,?)
-                    ON CONFLICT(id) DO UPDATE SET name=excluded.name,resume=excluded.resume,
-                    experience_graph=excluded.experience_graph,updated_at=excluded.updated_at""",
-                 (cid, name, resume, json.dumps(graph), now, now))
-    conn.commit()
+    with contextlib.closing(db()) as conn:
+        conn.execute("""INSERT INTO candidates(id,name,resume,experience_graph,created_at,updated_at)
+                        VALUES(?,?,?,?,?,?)
+                        ON CONFLICT(id) DO UPDATE SET name=excluded.name,resume=excluded.resume,
+                        experience_graph=excluded.experience_graph,updated_at=excluded.updated_at""",
+                     (cid, name, db_crypto.encrypt_text(resume), db_crypto.encrypt_text(json.dumps(graph)), now, now))
+        conn.commit()
     return cid
 
 
 def load_candidate(cid: str):
-    row = db().execute("SELECT * FROM candidates WHERE id=?", (cid,)).fetchone()
-    return dict(row) if row else None
+    # Not wired into the UI -- there is no "load a previous candidate" flow;
+    # adding one is a feature, not a hardening fix, and out of scope here.
+    # Kept as the tested read-side counterpart to save_candidate.
+    with contextlib.closing(db()) as conn:
+        row = conn.execute("SELECT * FROM candidates WHERE id=?", (cid,)).fetchone()
+    if not row:
+        return None
+    data = dict(row)
+    data["resume"] = db_crypto.decrypt_text(data["resume"])
+    data["experience_graph"] = db_crypto.decrypt_text(data["experience_graph"])
+    return data
 
 
 def save_session(sid: str, cid: str, role: str, company: str, jd: str,
                  analysis: Dict[str, Any], context: Dict[str, Any], history: List[Dict[str, Any]]):
     now = datetime.utcnow().isoformat()
-    conn = db()
-    conn.execute("""INSERT INTO sessions(id,candidate_id,role,company,jd,analysis,context,history,created_at,updated_at)
-                    VALUES(?,?,?,?,?,?,?,?,?,?)
-                    ON CONFLICT(id) DO UPDATE SET analysis=excluded.analysis,context=excluded.context,
-                    history=excluded.history,updated_at=excluded.updated_at""",
-                 (sid,cid,role,company,jd,json.dumps(analysis),json.dumps(context),json.dumps(history),now,now))
-    conn.commit()
+    with contextlib.closing(db()) as conn:
+        conn.execute("""INSERT INTO sessions(id,candidate_id,role,company,jd,analysis,context,history,created_at,updated_at)
+                        VALUES(?,?,?,?,?,?,?,?,?,?)
+                        ON CONFLICT(id) DO UPDATE SET analysis=excluded.analysis,context=excluded.context,
+                        history=excluded.history,updated_at=excluded.updated_at""",
+                     (sid,cid,role,company,
+                      db_crypto.encrypt_text(jd),
+                      db_crypto.encrypt_text(json.dumps(analysis)),
+                      db_crypto.encrypt_text(json.dumps(context)),
+                      db_crypto.encrypt_text(json.dumps(history)),
+                      now,now))
+        conn.commit()
 
 # ---------------- extraction ----------------
 def extract_file(uploaded) -> str:

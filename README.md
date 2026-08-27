@@ -31,6 +31,18 @@ Default models: `claude-sonnet-5` (Anthropic), `gpt-5.6-luna` (OpenAI). Override
 
 Anthropic exposes no speech-to-text endpoint. Recorded-answer transcription is therefore wired explicitly to `OPENAI_API_KEY` and runs on OpenAI even when Claude is handling text. Without that key the voice section hides itself and typed answers work as normal.
 
+## Data at rest
+
+RoleIQ persists to a local SQLite file (`roleiq.db` by default, override with `RoleIQ_DB`). The narrative-content columns — `resume`, `experience_graph`, `jd`, `analysis`, `context`, and `history` (full interview Q&A transcripts) — are encrypted with [Fernet](https://cryptography.io/en/latest/fernet/) symmetric encryption before they're written. Short metadata columns (ids, role, company, timestamps) are left plain.
+
+Set `RoleIQ_DB_KEY` to a generated key to persist encrypted data across restarts:
+
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+If `RoleIQ_DB_KEY` is unset, RoleIQ generates a throwaway key for that process only and warns loudly — anything saved becomes unreadable the moment the app restarts. There is no key-rotation or re-encryption tool; losing the key means deleting `roleiq.db` and starting fresh, which is an acceptable tradeoff for a single-user local tool. `roleiq.log` (diagnostic error/exception logging — see below) is **not** encrypted like the database is.
+
 ## Included
 
 - PDF/DOCX/TXT/MD JD and resume ingestion
