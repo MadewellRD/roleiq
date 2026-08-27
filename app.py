@@ -184,12 +184,16 @@ def build_steps(role_context_enabled: bool) -> List[Tuple[str, str]]:
 
 
 def recommended_step(step_keys: List[str], visited: set) -> Optional[str]:
+    # None means "nothing to recommend" -- either no steps exist, or every
+    # step has already been visited at least once. The caller must not
+    # collapse that into "recommend the last step forever," which reads as a
+    # never-ending nudge back to the same step during review.
     if not step_keys:
         return None
     for k in step_keys:
         if k not in visited:
             return k
-    return step_keys[-1]
+    return None
 
 
 def ordered_competencies(analysis: Dict[str, Any]) -> List[Tuple[int, Dict[str, Any]]]:
