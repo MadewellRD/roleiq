@@ -472,8 +472,11 @@ if analysis:
     st.session_state.wizard_visited.add(current_step)
 
     if current_step == "readiness_map":
-        comps = analysis.get("competencies", [])
-        for c in comps:
+        # Same interview-risk-first order as SME Training (ordered_competencies),
+        # rather than whatever order the model happened to return -- the two
+        # steps cover the same competencies and previously disagreed on order
+        # with no explanation.
+        for _idx, c in ordered_competencies(analysis):
             label = f"{c.get('name','')} — {c.get('candidate_level','')} / {c.get('interview_risk','')} risk"
             with st.expander(label):
                 a,b = st.columns(2)
