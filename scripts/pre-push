@@ -1,0 +1,34 @@
+#!/bin/sh
+# Local CI: blocks `git push` unless py_compile + pytest pass.
+# GitHub Actions CI (.github/workflows/ci.yml) is currently blocked by an
+# account billing issue and can't run remotely, so this is the active
+# enforcement mechanism until that's resolved.
+#
+# Not installed automatically -- git hooks aren't tracked by git. Install
+# once per clone: cp scripts/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+
+set -e
+cd "$(git rev-parse --show-toplevel)"
+
+PY=".venv/Scripts/python.exe"
+if [ ! -f "$PY" ]; then
+    echo "pre-push: $PY not found -- skipping local CI (venv missing)."
+    exit 0
+fi
+
+echo "pre-push: running local CI (py_compile + pytest)..."
+
+"$PY" -m py_compile app.py ai_provider.py check_providers.py db_crypto.py role_schema.py
+if [ $? -ne 0 ]; then
+    echo "pre-push: py_compile FAILED. Push blocked."
+    exit 1
+fi
+
+"$PY" -m pytest -q
+if [ $? -ne 0 ]; then
+    echo "pre-push: pytest FAILED. Push blocked."
+    exit 1
+fi
+
+echo "pre-push: local CI passed."
+exit 0

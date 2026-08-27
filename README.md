@@ -129,6 +129,20 @@ without network access or an API key. CI (`.github/workflows/ci.yml`) runs
 `py_compile` across every module plus the full suite on every push/PR to
 `main`.
 
+### Local CI
+
+`git hooks` aren't tracked by git, so after cloning, install the pre-push
+check once:
+
+```bash
+cp scripts/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+```
+
+It runs the same `py_compile` + `pytest` checks as CI and blocks the push if
+either fails — the active enforcement mechanism while GitHub Actions is
+unavailable (see CI status in the repo's Actions tab). Remote CI stays
+configured and will resume working automatically once that's resolved.
+
 Full live UI/API execution requires installing the packages in
 `requirements.txt` and supplying an API key; see "Verifying a deployment"
 above for a one-shot live smoke check via `check_providers.py`.
