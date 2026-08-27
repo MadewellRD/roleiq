@@ -32,8 +32,30 @@ Derived from what is built and verified working (Phase 0):
 - **NF2 — Local-only network exposure.** The Streamlit server binds to `127.0.0.1` only; no remote access is a supported configuration today.
 - **NF3 — No plaintext sensitive data at rest.** Resume, JD, analysis, and interview-history columns are encrypted; only short metadata (ids, role, company, timestamps) is plain.
 - **NF4 — No silent contract failures.** A structurally invalid AI response must surface as a visible, diagnosable error, never as an empty UI section.
-- **NF5 — Deterministic, offline-testable core logic.** The pure logic (candidate ID hashing, provider selection, JSON repair, file extraction, competency ordering, wizard step derivation) must be unit-testable without network access or an API key. 60 such tests exist and pass.
+- **NF5 — Deterministic, offline-testable core logic.** The pure logic (candidate ID hashing, provider selection, JSON repair, file extraction, competency ordering, wizard step derivation) must be unit-testable without network access or an API key. 82 such tests exist and pass as of this writing (`pytest -q`).
 - **NF6 — Local CI enforcement.** Every push is checked by `py_compile` + the full test suite before it leaves the machine, independent of whether remote CI is reachable.
+
+## Acceptance criteria
+
+One testable "Given X, observable Y" line per requirement, so each is checkable without further product input.
+
+- **F1.** Given a PDF over `RoleIQ_MAX_PDF_PAGES` or a file over `RoleIQ_MAX_UPLOAD_MB`, the upload is rejected with a specific size/page-count message rather than attempted.
+- **F2.** Given a resume with no mention of a technology, that technology never appears in the resulting Experience Graph's `technologies`/`capabilities` fields.
+- **F3.** Given `RoleIQ_ROLE_CONTEXT_ENABLED` unset, the wizard's step tracker never lists a "Role Context" step at all. Given it's set to `1`, the step appears and `role_context()` is called exactly once per Build.
+- **F4.** Given an `analyze()` reply missing the `competencies` field or containing zero competencies, the build fails with a visible `ContractError` diagnostic, never a blank Readiness Map.
+- **F5.** Given a Build completes, `interviewer_model()`'s output populates the Interview step's "Interviewer model" section with a non-empty archetype and style.
+- **F6.** Given competencies of mixed `interview_risk`, the SME Training checklist always offers "Generate SME Module" for the highest-risk untrained one first, and every lower-priority one shows as locked until it's reached in order.
+- **F7.** Given a typed or voice answer to a question, the graded turn appears in `history` with a `competency` field matching the one whose `sme_language` terms occur in the question text, not always the first competency in the list.
+- **F8.** Given a topic string, `sources_for_topic()`'s reply renders as one or more clickable source links under "Sources & Battle Card."
+- **F9.** Given at least one interview turn in `history`, "Generate battle card" produces downloadable Markdown containing the role and at least one item from `history`.
+- **F10.** Given the same resume text uploaded twice, both save-candidate calls upsert the same `candidates` row (by content-derived id), and the `resume` column's raw on-disk value is never the plaintext.
+- **F11.** Given a Build has completed, every step past Readiness Map is reachable via the step tracker in any order, with no step gated behind another (SME Training's internal per-competency lock is a separate, F6-scoped rule).
+- **NF1.** Given both `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are set, `ai_provider.provider()` returns `"anthropic"`, and every text generation call in that run uses the Anthropic client.
+- **NF2.** Given a fresh install with `.streamlit/config.toml` in place, `address` resolves to `127.0.0.1` and a request from a non-loopback origin cannot reach the app.
+- **NF3.** Given a saved candidate, a raw `sqlite3` query against the `resume` column returns ciphertext that does not contain the original plaintext substring.
+- **NF4.** Given `analyze()` returns a structurally invalid payload, the user sees a `ContractError` diagnostic naming the expected fields and the keys actually received, not an empty page.
+- **NF5.** Given `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` are both unset, `pytest -q` still passes in full with no network calls attempted.
+- **NF6.** Given a push with a failing test, `scripts/pre-push` (once installed) exits non-zero and blocks the push before it reaches the remote.
 
 ## Explicit non-goals (accepted, not gaps)
 
