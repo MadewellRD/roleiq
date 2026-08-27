@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T20:49:12Z",
+  "generated_at": "2026-08-27T21:37:44Z",
   "milestones": [
     {
       "id": "M1",
@@ -218,54 +218,54 @@
       "title": "Standardize button-label casing across the app",
       "milestone": "M4",
       "sprint": 4,
-      "status": "todo",
+      "status": "done",
       "acceptance": "Every st.button/st.download_button label in app.py follows one documented casing rule.",
       "depends_on": [
         "GL-01"
       ],
       "source": "web:ux-ui-design-system-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Title Case and sentence case currently interleaved within the same wizard step."
+      "pr": 23,
+      "evidence": "PR #23, merged d11b27a. Sentence case applied consistently, documented inline."
     },
     {
       "id": "GL-14",
       "title": "Standardize error-message tone (raw st.error(str(e)) vs user-facing guidance)",
       "milestone": "M4",
       "sprint": 4,
-      "status": "todo",
+      "status": "done",
       "acceptance": "All 9 raw st.error(str(e)) sites either gain guidance text or an inline comment stating why they stay raw.",
       "depends_on": [],
       "source": "web:ux-ui-design-system-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started."
+      "pr": 24,
+      "evidence": "PR #24, merged 178c2f9. Documented why all 9 sites stay raw (crafted exceptions), single shared explanation."
     },
     {
       "id": "GL-15",
       "title": "Add spinner/busy-indicator coverage to the 3 AI-call buttons missing one (voice transcribe, voice grade, source lookup)",
       "milestone": "M4",
       "sprint": 4,
-      "status": "todo",
+      "status": "done",
       "acceptance": "All st.button-triggered AI/network calls in app.py show a spinner or equivalent during the call.",
       "depends_on": [],
       "source": "web:ux-ui-design-system-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started."
+      "pr": 25,
+      "evidence": "PR #25, merged 4a443d2. Spinners added to voice transcribe and source lookup."
     },
     {
       "id": "GL-16",
       "title": "Give the Recommended-next banner an all-steps-visited terminal state",
       "milestone": "M4",
       "sprint": 4,
-      "status": "todo",
+      "status": "done",
       "acceptance": "After visiting every wizard step once, navigating to a non-final step shows no banner (or one saying review is complete).",
       "depends_on": [],
       "source": "web:ux-ui-design-system-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. recommended_step() currently falls back to the last step forever once all steps are visited."
+      "pr": 26,
+      "evidence": "PR #26, merged 8c54b94. recommended_step() returns None once all steps visited; verified via updated test."
     },
     {
       "id": "GL-17",
@@ -640,6 +640,30 @@
       "message": "Add test coverage for F3 (Role Context) and F5 (interviewer persona) (#22)",
       "date": "2026-08-27T20:49:12Z",
       "task": "GL-12"
+    },
+    {
+      "sha": "d11b27a",
+      "message": "Standardize button-label casing to sentence case (#23)",
+      "date": "2026-08-27T21:14:11Z",
+      "task": "GL-13"
+    },
+    {
+      "sha": "178c2f9",
+      "message": "Document why the 9 raw st.error(str(e)) sites stay raw (#24)",
+      "date": "2026-08-27T21:21:58Z",
+      "task": "GL-14"
+    },
+    {
+      "sha": "4a443d2",
+      "message": "Add missing spinners for voice transcription and source lookup (#25)",
+      "date": "2026-08-27T21:29:35Z",
+      "task": "GL-15"
+    },
+    {
+      "sha": "8c54b94",
+      "message": "Give the Recommended-next banner an all-steps-visited terminal state (#26)",
+      "date": "2026-08-27T21:37:44Z",
+      "task": "GL-16"
     }
   ]
 }
