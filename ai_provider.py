@@ -53,6 +53,13 @@ TRANSCRIBE_MODEL = os.getenv("RoleIQ_TRANSCRIBE_MODEL", "gpt-4o-mini-transcribe"
 DEFAULT_TEXT_MAX_TOKENS = int(os.getenv("RoleIQ_MAX_TOKENS", "7000"))
 DEFAULT_JSON_MAX_TOKENS = int(os.getenv("RoleIQ_JSON_MAX_TOKENS", "16000"))
 
+# Without this, a hung network call blocks the UI indefinitely behind a
+# spinner with no feedback (see architecture.md's risk register). Both SDKs
+# accept a plain float-seconds timeout at the client level and raise their
+# own APITimeoutError when it's exceeded -- distinct from this module's
+# ProviderError, so it's never mistaken for a configuration problem.
+AI_TIMEOUT_SECONDS = float(os.getenv("RoleIQ_AI_TIMEOUT_SECONDS", "60"))
+
 # Server-side web search, one definition per provider.
 OPENAI_WEB_SEARCH_TOOL: Dict[str, Any] = {"type": "web_search"}
 ANTHROPIC_WEB_SEARCH_TOOL: Dict[str, Any] = {
@@ -180,7 +187,7 @@ def openai_client():
         )
     from openai import OpenAI
 
-    return OpenAI(api_key=key)
+    return OpenAI(api_key=key, timeout=AI_TIMEOUT_SECONDS)
 
 
 def anthropic_client():
@@ -191,7 +198,7 @@ def anthropic_client():
         )
     from anthropic import Anthropic
 
-    return Anthropic(api_key=key)
+    return Anthropic(api_key=key, timeout=AI_TIMEOUT_SECONDS)
 
 
 # -------------------------------------------------------------- text calls --
