@@ -37,6 +37,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger("roleiq")
 
+# Every `except Exception as e: st.error(str(e))` in this file (9 sites) shows
+# the exception message verbatim, deliberately, not by omission: the
+# exceptions that reach these sites are typically ai_provider.ProviderError,
+# db_crypto.DecryptionError, or extract_file()'s ValueErrors -- all three are
+# crafted for verbatim display (see each class's own docstring/message).
+# role_schema.ContractError is handled separately with its own diagnostic
+# rendering, not through these sites. A raw, unwrapped SDK exception slipping
+# through instead is the rarer case; roleiq.log's traceback (logger.exception,
+# right before each st.error call) is where to look for that one.
+
 st.set_page_config(page_title=APP_TITLE, page_icon="W", layout="wide")
 
 _db_parent = Path(DB_PATH).expanduser().resolve().parent
