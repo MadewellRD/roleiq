@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T19:45:14Z",
+  "generated_at": "2026-08-27T20:21:07Z",
   "milestones": [
     {
       "id": "M1",
@@ -114,60 +114,60 @@
       "title": "Fix voice-answer grading to use SME-language competency matching (currently always grades against competencies[0])",
       "milestone": "M2",
       "sprint": 2,
-      "status": "todo",
+      "status": "done",
       "acceptance": "Grading a voice-transcribed answer selects the same competency the typed path would select for an identical question (test asserts this directly).",
       "depends_on": [
         "GL-01"
       ],
       "source": "web:site-product-requirements-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Highest-severity finding of the audit -- app.py:582 hardcodes competencies[0] vs the typed path's SME-language match at app.py:527-531."
+      "pr": 16,
+      "evidence": "PR #16, merged e2abb65. match_competency() extracted and shared by both grading paths, 5 new tests, confirmed identical matching for typed vs voice."
     },
     {
       "id": "GL-07",
       "title": "Persist voice-graded turns to history/save_session, or state plainly they won't be saved",
       "milestone": "M2",
       "sprint": 2,
-      "status": "todo",
+      "status": "done",
       "acceptance": "A voice-graded turn appears in history and survives a save_session round-trip the same as a typed turn -- or the UI states it won't.",
       "depends_on": [
         "GL-06"
       ],
       "source": "web:site-product-requirements-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. app.py:581-586 currently sets only session_state.grade, no history append, no persistence."
+      "pr": 17,
+      "evidence": "PR #17, merged 9cde83a. Voice-graded turns now append to history and call save_session identically to the typed path."
     },
     {
       "id": "GL-08",
       "title": "Reset current_question on re-Build so a new JD/resume doesn't show the previous role's question",
       "milestone": "M2",
       "sprint": 2,
-      "status": "todo",
+      "status": "done",
       "acceptance": "Build, answer a question, re-Build with a different JD/resume -- Interview step shows a question from the new analysis without a manual Next Question click.",
       "depends_on": [
         "GL-01"
       ],
       "source": "web:frontend-engineering-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Build handler's session_state.update() resets history/grade/next/trained_modules/wizard_step/wizard_visited but not current_question."
+      "pr": 18,
+      "evidence": "PR #18, merged 07ad6c2. Verified via AppTest: re-Build with a different JD/resume now shows a question from the new analysis, not the old one."
     },
     {
       "id": "GL-09",
       "title": "Make provider_healthy reflect current state (currently never resets on a later failure)",
       "milestone": "M2",
       "sprint": 2,
-      "status": "todo",
+      "status": "done",
       "acceptance": "One successful build then a failing AI call -- sidebar no longer claims Provider healthy.",
       "depends_on": [
         "GL-01"
       ],
       "source": "web:ux-ui-design-system-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. app.py:349 sets provider_healthy=True once, never cleared, including inside the generic exception handler."
+      "pr": 19,
+      "evidence": "PR #19, merged 1515a7d. Verified via AppTest: provider_healthy correctly flips False on a simulated auth failure after an earlier successful build."
     },
     {
       "id": "GL-10",
@@ -598,6 +598,30 @@
       "message": "Document 5 undocumented env vars in .env.example (#15)",
       "date": "2026-08-27T19:45:14Z",
       "task": "GL-05"
+    },
+    {
+      "sha": "e2abb65",
+      "message": "Fix voice-answer grading to match competency by question (was always [0]) (#16)",
+      "date": "2026-08-27T19:59:29Z",
+      "task": "GL-06"
+    },
+    {
+      "sha": "9cde83a",
+      "message": "Persist voice-graded turns to history/save_session like typed turns (#17)",
+      "date": "2026-08-27T20:04:35Z",
+      "task": "GL-07"
+    },
+    {
+      "sha": "07ad6c2",
+      "message": "Reset current_question in the Build handler on re-Build (#18)",
+      "date": "2026-08-27T20:13:56Z",
+      "task": "GL-08"
+    },
+    {
+      "sha": "1515a7d",
+      "message": "Reset provider_healthy when a later AI call fails after an earlier success (#19)",
+      "date": "2026-08-27T20:21:07Z",
+      "task": "GL-09"
     }
   ]
 }
