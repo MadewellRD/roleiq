@@ -144,3 +144,66 @@ def test_grade_and_continue_persists_to_history():
     assert turn["competency"] == "Distributed Systems"  # SME-language matched, not competencies[0] by luck
     assert at.session_state["grade"] == FAKE_GRADE
     assert at.session_state["next"] == FAKE_NEXT
+
+
+def test_readiness_map_links_to_sme_training():
+    at = AppTest.from_file("../app.py")
+    at.run(timeout=30)
+    _build(at)
+
+    link_btn = [b for b in at.button if b.label == "Go to SME Training →"][0]
+    link_btn.click().run(timeout=30)
+    assert not at.exception
+    assert at.session_state["wizard_step"] == "sme_training"
+
+
+def test_experience_graph_links_back_to_readiness_map():
+    at = AppTest.from_file("../app.py")
+    at.run(timeout=30)
+    _build(at)
+    at.session_state["wizard_step"] = "experience_graph"
+    at.run(timeout=30)
+
+    link_btn = [b for b in at.button if b.label == "← Back to Readiness Map"][0]
+    link_btn.click().run(timeout=30)
+    assert not at.exception
+    assert at.session_state["wizard_step"] == "readiness_map"
+
+
+def test_sme_training_all_trained_links_to_interview():
+    at = AppTest.from_file("../app.py")
+    at.run(timeout=30)
+    _build(at)
+    at.session_state["wizard_step"] = "sme_training"
+    at.run(timeout=30)
+
+    for _ in range(2):  # two competencies in FAKE_ANALYSIS
+        train_btn = [b for b in at.button if b.label == "Generate SME module"][0]
+        train_btn.click().run(timeout=30)
+        assert not at.exception
+
+    link_btn = [b for b in at.button if b.label == "Start Interview practice →"][0]
+    link_btn.click().run(timeout=30)
+    assert not at.exception
+    assert at.session_state["wizard_step"] == "interview"
+
+
+def test_interview_links_to_sources_battle_card_only_after_a_graded_turn():
+    at = AppTest.from_file("../app.py")
+    at.run(timeout=30)
+    _build(at)
+    at.session_state["wizard_step"] = "interview"
+    at.run(timeout=30)
+
+    link_labels = [b.label for b in at.button]
+    assert "Research sources & build battle card →" not in link_labels  # no history yet
+
+    at.session_state["answer_box"] = "We used Raft for consensus across replicas."
+    grade_btn = [b for b in at.button if b.label == "Grade & continue"][0]
+    grade_btn.click().run(timeout=30)
+    assert not at.exception
+
+    link_btn = [b for b in at.button if b.label == "Research sources & build battle card →"][0]
+    link_btn.click().run(timeout=30)
+    assert not at.exception
+    assert at.session_state["wizard_step"] == "sources_battle_card"
