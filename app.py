@@ -1,4 +1,4 @@
-import contextlib, os, re, json, sqlite3, hashlib, textwrap, tempfile
+import contextlib, os, re, json, sqlite3, hashlib, textwrap, tempfile, logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -22,6 +22,19 @@ DB_PATH = os.getenv("RoleIQ_DB", str(Path(__file__).with_name("roleiq.db")))
 MAX_UPLOAD_MB = int(os.getenv("RoleIQ_MAX_UPLOAD_MB", "15"))
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 MAX_PDF_PAGES = int(os.getenv("RoleIQ_MAX_PDF_PAGES", "200"))
+
+# Error/exception logging only -- never full prompt/response bodies or secrets.
+# roleiq.log is NOT encrypted the way roleiq.db is; logging full request
+# content here would recreate the plaintext exposure the DB encryption closes.
+logging.basicConfig(
+    level=os.getenv("RoleIQ_LOG_LEVEL", "INFO"),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    handlers=[
+        logging.FileHandler(Path(__file__).with_name("roleiq.log"), encoding="utf-8"),
+        logging.StreamHandler(),
+    ],
+)
+logger = logging.getLogger("roleiq")
 
 st.set_page_config(page_title=APP_TITLE, page_icon="W", layout="wide")
 
@@ -273,12 +286,12 @@ with col1:
     jd_text = st.text_area("Job Description", value=jd_default, height=330, placeholder="Paste the complete JD here…")
     if jd_file and st.button("Load JD file"):
         try: st.session_state.jd_text = clean_text(extract_file(jd_file)); st.rerun()
-        except Exception as e: st.error(str(e))
+        except Exception as e: logger.exception("extract_file:jd"); st.error(str(e))
 with col2:
     resume_text = st.text_area("Current Resume", value=resume_default, height=330, placeholder="Paste your resume here…")
     if resume_file and st.button("Load Resume file"):
         try: st.session_state.resume_text = clean_text(extract_file(resume_file)); st.rerun()
-        except Exception as e: st.error(str(e))
+        except Exception as e: logger.exception("extract_file:resume"); st.error(str(e))
 
 if st.button("Build RoleIQ Role Model", type="primary", use_container_width=True):
     if len(jd_text.strip()) < 200: st.error("The JD is too short.")
@@ -306,7 +319,7 @@ if st.button("Build RoleIQ Role Model", type="primary", use_container_width=True
                     "persona":persona,"history":[],"module":None,"grade":None,"next":None})
                 save_session(sid,cid,analysis.get("role",provisional_role),company,jd_text,analysis,ctx,[])
                 status.update(label="RoleIQ role model ready", state="complete")
-        except Exception as e: st.error(str(e))
+        except Exception as e: logger.exception("build_role_model"); st.error(str(e))
 
 analysis = st.session_state.get("analysis")
 if analysis:
@@ -362,7 +375,7 @@ if analysis:
             if st.button("Generate SME Module", key="train"):
                 try:
                     with st.spinner("Building module…"): st.session_state.module = training_module(analysis, comp, ctx)
-                except Exception as e: st.error(str(e))
+                except Exception as e: logger.exception("training_module"); st.error(str(e))
             m = st.session_state.get("module")
             if m:
                 st.write("**What it means**", m.get("what_it_means", ""))
@@ -406,7 +419,7 @@ if analysis:
                             st.session_state.current_question = synthesize_question(analysis, persona, history)
                             save_session(st.session_state.session_id, st.session_state.candidate_id, analysis.get("role",""), st.session_state.company, st.session_state.jd_text, analysis, ctx, history)
                             st.rerun()
-                    except Exception as e: st.error(str(e))
+                    except Exception as e: logger.exception("grade_answer"); st.error(str(e))
         with c2:
             if st.button("Next Question"):
                 st.session_state.current_question = synthesize_question(analysis, persona, history)
@@ -440,7 +453,7 @@ if analysis:
                             f.write(audio.getvalue()); path=f.name
                         st.session_state.voice_transcript = ai_provider.transcribe(path)
                         st.rerun()
-                    except Exception as e: st.error(str(e))
+                    except Exception as e: logger.exception("voice_transcribe"); st.error(str(e))
                     finally:
                         if path and os.path.exists(path):
                             os.unlink(path)
@@ -451,14 +464,14 @@ if analysis:
                 try:
                     st.session_state.grade=grade_answer(analysis,comp,st.session_state.current_question,st.session_state.voice_transcript,persona)
                     st.rerun()
-                except Exception as e: st.error(str(e))
+                except Exception as e: logger.exception("voice_grade"); st.error(str(e))
 
     with tabs[5]:
         st.markdown("### Evidence-backed technical sources")
         topic = st.text_input("Research a technical claim/topic", placeholder="e.g. MCP tool orchestration, RAG evaluation")
         if st.button("Find authoritative sources") and topic.strip():
             try: st.session_state.sources = sources_for_topic(topic.strip())
-            except Exception as e: st.error(str(e))
+            except Exception as e: logger.exception("sources_for_topic"); st.error(str(e))
         for s in st.session_state.get("sources", {}).get("claims", []):
             st.markdown(f"**{s.get('claim','')}** — [{s.get('source','source')}]({s.get('url','#')})")
         st.markdown("### Interview battle card")
@@ -466,7 +479,7 @@ if analysis:
             try:
                 with st.spinner("Compiling battle card…"):
                     st.session_state.battle = battle_card(analysis,ctx,persona,history,graph)
-            except Exception as e: st.error(str(e))
+            except Exception as e: logger.exception("battle_card"); st.error(str(e))
         if st.session_state.get("battle"):
             st.download_button("Download Markdown battle card", st.session_state.battle, file_name="RoleIQ_Interview_Battle_Card.md", mime="text/markdown")
             st.markdown(st.session_state.battle)

@@ -140,6 +140,7 @@ function Read-ApiKeyIntoEnv {
 
     Set-Item -Path "Env:$EnvName" -Value $Plain
     Write-Host "$EnvName configured for this session." -ForegroundColor Green
+    $Plain = $null  # best-effort: drop the reference so GC can reclaim it; .NET strings can't be forcibly zeroed
 }
 
 $HasAnthropic = -not [string]::IsNullOrWhiteSpace($env:ANTHROPIC_API_KEY)
