@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T23:29:20Z",
+  "generated_at": "2026-08-27T23:39:03Z",
   "milestones": [
     {
       "id": "M1",
@@ -466,13 +466,13 @@
       "title": "Add cross-links between related wizard steps",
       "milestone": "M8",
       "sprint": 8,
-      "status": "todo",
+      "status": "done",
       "acceptance": "Not required to block go-live; closed by implementing a link or an explicit recorded decision to defer indefinitely.",
       "depends_on": [],
       "source": "web:information-architecture-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Recorded by the audit as a findability nicety, not a defect -- still tracked, not dropped."
+      "pr": 41,
+      "evidence": "PR #41, merged f2df6d7. Four cross-links: Readiness Map -> SME Training, Experience Graph -> back to Readiness Map, SME Training (fully trained) -> Interview, Interview (graded turn exists) -> Sources & Battle Card. Found and fixed a real bug along the way: cross-link buttons inside a step body can't write wizard_step directly (widget already instantiated this run) -- fixed with a _pending_wizard_step key applied before the widget renders, same pattern as Back/Next. Four new AppTest regression tests."
     },
     {
       "id": "GL-31",
@@ -748,6 +748,12 @@
       "message": "GL-29: auto-install the pre-push hook per clone (#40)",
       "date": "2026-08-27T23:29:20Z",
       "task": "GL-29"
+    },
+    {
+      "sha": "f2df6d7",
+      "message": "GL-30: add cross-links between related wizard steps (#41)",
+      "date": "2026-08-27T23:39:03Z",
+      "task": "GL-30"
     }
   ]
 }
