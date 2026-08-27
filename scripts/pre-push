@@ -16,7 +16,17 @@ if [ ! -f "$PY" ]; then
     exit 0
 fi
 
-echo "pre-push: running local CI (py_compile + pytest)..."
+echo "pre-push: running local CI (clean-install check + py_compile + pytest)..."
+
+# Resolves requirements-dev.txt (which pulls in requirements.txt) against
+# PyPI without installing anything, so a bad/yanked/nonexistent pin fails
+# the push instead of silently passing because .venv already has an old
+# copy of the package installed from before the pin broke.
+"$PY" -m pip install --dry-run --quiet -r requirements-dev.txt
+if [ $? -ne 0 ]; then
+    echo "pre-push: requirements-dev.txt cannot be installed cleanly. Push blocked."
+    exit 1
+fi
 
 "$PY" -m py_compile app.py ai_provider.py check_providers.py db_crypto.py role_schema.py
 if [ $? -ne 0 ]; then
