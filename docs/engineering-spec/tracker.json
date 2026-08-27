@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T22:14:04Z",
+  "generated_at": "2026-08-27T22:43:03Z",
   "milestones": [
     {
       "id": "M1",
@@ -324,26 +324,26 @@
       "title": "Add rotation/size cap to roleiq.log",
       "milestone": "M6",
       "sprint": 6,
-      "status": "todo",
+      "status": "done",
       "acceptance": "The log handler is a RotatingFileHandler/TimedRotatingFileHandler with a stated size/backup-count policy.",
       "depends_on": [],
       "source": "sdlc:observability-readiness-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Currently a plain FileHandler, grows unbounded."
+      "pr": 31,
+      "evidence": "PR #31, merged 1bc9793. roleiq.log now uses RotatingFileHandler, 5MB per file, 3 backups (~20MB ceiling)."
     },
     {
       "id": "GL-22",
       "title": "Add a top-level exception hook so uncaught exceptions still reach roleiq.log, or explicitly accept the gap",
       "milestone": "M6",
       "sprint": 6,
-      "status": "todo",
+      "status": "done",
       "acceptance": "Either a verified top-level hook exists, or architecture.md/requirements.md records the decision to accept this gap with reasoning.",
       "depends_on": [],
       "source": "web:web-observability-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. 9 logger.exception sites only fire inside existing try/except blocks."
+      "pr": 32,
+      "evidence": "PR #32, merged 4d57907. Verified hook: Streamlit's script runner logs an uncaught top-level exception through streamlit.error_util, a logger Streamlit itself sets propagate=False on -- so root-logger handlers and sys.excepthook (never reached, Streamlit intercepts first) both missed it. Fixed by attaching app.py's RotatingFileHandler directly to that named logger. Confirmed via AppTest: message absent from roleiq.log before the fix, present after. Two committed regression tests (tests/test_uncaught_exception_logging.py)."
     },
     {
       "id": "GL-23",
@@ -688,6 +688,18 @@
       "message": "Add a pre-Build preview of the wizard's step structure (#30)",
       "date": "2026-08-27T22:14:04Z",
       "task": "GL-20"
+    },
+    {
+      "sha": "1bc9793",
+      "message": "Add rotation/size cap to roleiq.log (#31)",
+      "date": "2026-08-27T22:29:17Z",
+      "task": "GL-21"
+    },
+    {
+      "sha": "4d57907",
+      "message": "GL-22: capture uncaught top-level exceptions in roleiq.log (#32)",
+      "date": "2026-08-27T22:43:03Z",
+      "task": "GL-22"
     }
   ]
 }
