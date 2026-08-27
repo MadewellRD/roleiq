@@ -153,6 +153,28 @@ Full live UI/API execution requires installing the packages in
 `requirements.txt` and supplying an API key; see "Verifying a deployment"
 above for a one-shot live smoke check via `check_providers.py`.
 
+## Troubleshooting
+
+Start with two things before anything else: `roleiq.log` (next to `app.py`, rotates at 5MB with 3 backups) for the exact exception and traceback, and `python check_providers.py` to confirm the active provider can actually complete a call.
+
+**"No AI provider is configured"** — Neither `ANTHROPIC_API_KEY` nor `OPENAI_API_KEY` is set. Add one to `.env` (see "Run" above) or your deployment secrets, then restart.
+
+**Sidebar shows "Add ANTHROPIC_API_KEY or OPENAI_API_KEY" even though a key is set** — The key is present in the shell/`.env` but wasn't picked up by this process. `run-roleiq.ps1` sets an interactively-entered key for that session only; put it in `.env` if you need it to persist across launches. Restart after editing `.env`.
+
+**Data from a previous session is unreadable, or the app warned about a "throwaway key"** — `RoleIQ_DB_KEY` was unset, so RoleIQ generated a temporary encryption key for that run only. Set `RoleIQ_DB_KEY` (see "Data at rest" above) before the *first* save you want to keep. There is no recovery path for data saved under a discarded throwaway key; delete `roleiq.db` and start over.
+
+**Build fails with a `ContractError`** — The active provider returned a reply that parsed as JSON but didn't have the shape `analyze()` asked for (missing/empty `competencies`, typically). The diagnostic names the expected fields and the keys actually received. Retry; if it repeats, check `roleiq.log` for the full payload context and consider whether the configured model (`RoleIQ_MODEL_ANTHROPIC`/`RoleIQ_MODEL_OPENAI`) supports structured tool output.
+
+**An upload is rejected outright** — File exceeds `RoleIQ_MAX_UPLOAD_MB` (default 15) or a PDF exceeds `RoleIQ_MAX_PDF_PAGES` (default 200). Raise both the env var and `.streamlit/config.toml`'s `maxUploadSize` together, since the lower of the two always wins.
+
+**A call hangs, then fails after about a minute** — Expected behavior: both provider clients are bounded by `RoleIQ_AI_TIMEOUT_SECONDS` (default 60). `roleiq.log` will show an `APITimeoutError`. If this happens often, check network conditions to the provider or raise the timeout.
+
+**The voice/recording controls don't appear** — Voice is OpenAI-only regardless of which provider is handling text (Anthropic has no speech-to-text endpoint). The section hides itself when `OPENAI_API_KEY` is absent; typed answers still work.
+
+**`git push` is blocked by the pre-push hook** — Local CI failed one of three checks, printed above the failure line: a clean-install resolve of `requirements-dev.txt` (a pin regression), `py_compile`, or `pytest -q`. Re-run the failing command directly (see "Development" above) to see the full error. If the hook itself is missing, it isn't installed for this clone yet: `cp scripts/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push`.
+
+**An exception with no `st.error` message on screen** — Check `roleiq.log` directly; an uncaught exception outside RoleIQ's own `try`/`except` blocks (rare) is still captured there via a handler attached to Streamlit's own script-runner logger, not just to stderr.
+
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE).
