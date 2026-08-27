@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T23:22:01Z",
+  "generated_at": "2026-08-27T23:29:20Z",
   "milestones": [
     {
       "id": "M1",
@@ -453,13 +453,13 @@
       "title": "Add a reminder/check that the pre-push hook is installed per-clone",
       "milestone": "M8",
       "sprint": 8,
-      "status": "todo",
+      "status": "done",
       "acceptance": "Either a pre-commit-time check for .git/hooks/pre-push, or an explicit recorded decision that README documentation is sufficient.",
       "depends_on": [],
       "source": "sdlc:ci-failure-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Remote CI is also currently down, so a missed manual install step means zero enforcement, silently."
+      "pr": 40,
+      "evidence": "PR #40, merged e3e37f2. run-roleiq.ps1's new step [4/7] auto-installs scripts/pre-push into .git/hooks/pre-push if missing. Verified both branches directly in PowerShell (missing -> installed; present -> no-op) and confirmed the resulting hook runs correctly under Git Bash. README's Local CI section updated."
     },
     {
       "id": "GL-30",
@@ -742,6 +742,12 @@
       "message": "GL-28: document the CSP gap as an accepted risk (#39)",
       "date": "2026-08-27T23:22:01Z",
       "task": "GL-28"
+    },
+    {
+      "sha": "e3e37f2",
+      "message": "GL-29: auto-install the pre-push hook per clone (#40)",
+      "date": "2026-08-27T23:29:20Z",
+      "task": "GL-29"
     }
   ]
 }
