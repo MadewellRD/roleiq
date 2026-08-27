@@ -387,7 +387,13 @@ if st.button("Build RoleIQ Role Model", type="primary", use_container_width=True
             logger.exception("build_role_model:contract")
             st.error("The model returned valid JSON, but not in RoleIQ's expected shape. Retry the build -- if it keeps happening, the diagnostic below is what to report.")
             st.code(str(e))
-        except Exception as e: logger.exception("build_role_model"); st.error(str(e))
+        except Exception as e:
+            # A ContractError (above) means the provider WAS reachable and
+            # responded, just with the wrong shape -- that's not a health
+            # signal. Anything landing here (auth, network, rate limit,
+            # missing key) means the provider itself didn't come through.
+            st.session_state.provider_healthy = False
+            logger.exception("build_role_model"); st.error(str(e))
 
 analysis = st.session_state.get("analysis")
 if analysis:
