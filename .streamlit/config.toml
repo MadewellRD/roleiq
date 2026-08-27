@@ -1,0 +1,6 @@
+[server]
+address = "127.0.0.1"
+enableXsrfProtection = true
+enableCORS = true
+headless = false
+maxUploadSize = 15

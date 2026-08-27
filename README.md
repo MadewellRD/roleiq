@@ -95,15 +95,24 @@ the JSON pipeline works end to end. Run it from the shell that holds your API
 key. Note that `run-roleiq.ps1` sets an interactively-entered key for that
 session only — put the key in `.env` if you want it to persist across launches.
 
-## Sandbox validation
+## Development
 
-The source passes Python compilation and dependency-free functional harnesses
-(88 checks, no network or keys) covering text normalization, candidate/session
-persistence, provider selection and model precedence, the argument contracts for
-both the OpenAI Responses API and the Anthropic Messages API, `pause_turn`
-continuation, JSON extraction against prose-wrapped and truncated replies, the
-repair pass, and every fallback branch. Full live UI/API execution requires
-installing the packages in `requirements.txt` and supplying an API key.
+```bash
+pip install -r requirements-dev.txt
+pytest -q
+```
+
+The suite covers candidate ID hashing, provider selection precedence, JSON
+repair/balanced-object parsing, file extraction (including corrupt-file
+handling), SQLite save/load round-trips (including verifying that stored data
+is actually ciphertext, not plaintext), and prompt-injection wrapping — all
+without network access or an API key. CI (`.github/workflows/ci.yml`) runs
+`py_compile` across every module plus the full suite on every push/PR to
+`main`.
+
+Full live UI/API execution requires installing the packages in
+`requirements.txt` and supplying an API key; see "Verifying a deployment"
+above for a one-shot live smoke check via `check_providers.py`.
 
 ## License
 
