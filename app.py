@@ -158,6 +158,44 @@ def clean_text(s: str) -> str:
     s = re.sub(r"[ \t]+", " ", s)
     return re.sub(r"\n{3,}", "\n\n", s).strip()
 
+# ---------------- wizard ----------------
+def build_steps(role_context_enabled: bool) -> List[Tuple[str, str]]:
+    steps = [
+        ("readiness_map", "Readiness Map"),
+        ("role_context", "Role Context"),
+        ("experience_graph", "Experience Graph"),
+        ("sme_training", "SME Training"),
+        ("interview", "Interview"),
+        ("sources_battle_card", "Sources & Battle Card"),
+    ]
+    if not role_context_enabled:
+        steps = [s for s in steps if s[0] != "role_context"]
+    return steps
+
+
+def recommended_step(step_keys: List[str], visited: set) -> Optional[str]:
+    if not step_keys:
+        return None
+    for k in step_keys:
+        if k not in visited:
+            return k
+    return step_keys[-1]
+
+
+def ordered_competencies(analysis: Dict[str, Any]) -> List[Tuple[int, Dict[str, Any]]]:
+    # analyze()'s schema asks for a 3-value interview_risk enum (Low/Medium/
+    # High); anything else -- missing, empty, or an unrecognized value --
+    # sorts last. sorted() is stable, so ties keep their original order.
+    risk_rank = {"High": 0, "Medium": 1, "Low": 2}
+    pairs = list(enumerate(analysis.get("competencies", [])))
+    return sorted(pairs, key=lambda pair: risk_rank.get(pair[1].get("interview_risk"), 3))
+
+
+def competency_progress(ordered: List[Tuple[int, Dict[str, Any]]], trained_modules: Dict[int, Any]) -> Tuple[int, int]:
+    total = len(ordered)
+    done = sum(1 for idx, _ in ordered if idx in trained_modules)
+    return done, total
+
 # ---------------- AI ----------------
 def client():
     """OpenAI client, kept for the OpenAI-only voice transcription path.
@@ -325,7 +363,8 @@ if st.button("Build RoleIQ Role Model", type="primary", use_container_width=True
                 sid = hashlib.sha256((cid + clean_text(jd_text)).encode()).hexdigest()[:16]
                 st.session_state.update({"candidate_id":cid,"session_id":sid,"jd_text":jd_text,"resume_text":resume_text,
                     "company":company,"role_hint":role_hint,"graph":graph,"context":ctx,"analysis":analysis,
-                    "persona":persona,"history":[],"module":None,"grade":None,"next":None})
+                    "persona":persona,"history":[],"grade":None,"next":None,
+                    "trained_modules":{},"wizard_step":build_steps(ROLE_CONTEXT_ENABLED)[0][0],"wizard_visited":set()})
                 save_session(sid,cid,analysis.get("role",provisional_role),company,jd_text,analysis,ctx,[])
                 status.update(label="RoleIQ role model ready", state="complete")
         except role_schema.ContractError as e:
@@ -344,9 +383,56 @@ if analysis:
     st.subheader(f"{analysis.get('role','Target Role')} {('— ' + analysis.get('company')) if analysis.get('company') else ''}")
     st.write(analysis.get("executive_summary", ""))
 
-    tabs = st.tabs(["Readiness Map", "Role Context", "Experience Graph", "SME Training", "Interview", "Sources & Battle Card"])
+    # ---- wizard step tracker ----
+    steps = build_steps(ROLE_CONTEXT_ENABLED)
+    step_keys = [k for k, _ in steps]
+    ordered_comps = ordered_competencies(analysis)
+    trained_modules = st.session_state.setdefault("trained_modules", {})
+    trained_done, trained_total = competency_progress(ordered_comps, trained_modules)
 
-    with tabs[0]:
+    if st.session_state.get("wizard_step") not in step_keys:
+        st.session_state.wizard_step = step_keys[0]
+    st.session_state.setdefault("wizard_visited", set())
+
+    idx = step_keys.index(st.session_state.wizard_step)
+    st.progress(idx / (len(step_keys) - 1) if len(step_keys) > 1 else 1.0,
+                text=f"Step {idx + 1} of {len(step_keys)}")
+
+    nav_back, nav_spacer, nav_next = st.columns([1, 4, 1])
+    with nav_back:
+        if st.button("Back", disabled=idx == 0, key="wizard_back", use_container_width=True):
+            st.session_state.wizard_step = step_keys[idx - 1]
+            st.rerun()
+    with nav_next:
+        if st.button("Next", disabled=idx == len(step_keys) - 1, key="wizard_next", use_container_width=True):
+            st.session_state.wizard_step = step_keys[idx + 1]
+            st.rerun()
+
+    rec = recommended_step(step_keys, st.session_state.wizard_visited)
+    if rec and rec != st.session_state.wizard_step:
+        rec_label = dict(steps)[rec]
+        st.info(f"Recommended next: {rec_label}")
+
+    step_labels = dict(steps)
+    if "sme_training" in step_labels:
+        step_labels["sme_training"] = f"SME Training ({trained_done}/{trained_total})"
+
+    chosen = st.segmented_control(
+        "Step",
+        options=step_keys,
+        format_func=lambda k: step_labels[k],
+        key="wizard_step",
+    )
+    if chosen is None:
+        # Re-clicking the active pill deselects it in segmented_control and
+        # returns None -- snap back rather than losing wizard position.
+        st.session_state.wizard_step = step_keys[idx]
+        st.rerun()
+
+    current_step = st.session_state.wizard_step
+    st.session_state.wizard_visited.add(current_step)
+
+    if current_step == "readiness_map":
         comps = analysis.get("competencies", [])
         for c in comps:
             label = f"{c.get('name','')} — {c.get('candidate_level','')} / {c.get('interview_risk','')} risk"
@@ -361,7 +447,7 @@ if analysis:
         st.markdown("**Training priorities**")
         for x in analysis.get("training_priorities", []): st.write("• " + x)
 
-    with tabs[1]:
+    elif current_step == "role_context":
         if ctx.get("status") == "deferred":
             st.info("Role Context Plane is disabled (set RoleIQ_ROLE_CONTEXT_ENABLED=1 to enable public company/technical research).")
         st.markdown("**Company context**")
@@ -372,7 +458,7 @@ if analysis:
         for x in ctx.get("likely_interview_themes", []): st.write("• " + x)
         if ctx.get("inferences"): st.info("Inference: " + " | ".join(ctx["inferences"]))
 
-    with tabs[2]:
+    elif current_step == "experience_graph":
         st.write(graph.get("candidate_summary", ""))
         for r in graph.get("roles", []):
             with st.expander(f"{r.get('title','')} — {r.get('company','')}"):
@@ -382,30 +468,48 @@ if analysis:
         st.markdown("**Capabilities**")
         st.write(", ".join(graph.get("capabilities", [])))
 
-    with tabs[3]:
-        names = [c.get("name", "") for c in analysis.get("competencies", [])]
-        if names:
-            selected = st.selectbox("Competency", names)
-            comp = next(c for c in analysis["competencies"] if c.get("name") == selected)
-            if st.button("Generate SME Module", key="train"):
-                try:
-                    with st.spinner("Building module…"): st.session_state.module = training_module(analysis, comp, ctx)
-                except Exception as e: logger.exception("training_module"); st.error(str(e))
-            m = st.session_state.get("module")
-            if m:
-                st.write("**What it means**", m.get("what_it_means", ""))
-                st.write("**Why the role cares**", m.get("why_the_role_cares", ""))
-                st.write("**How an SME thinks**"); [st.write("• "+x) for x in m.get("how_an_sme_thinks", [])]
-                st.write("**Architecture / workflow**"); [st.write(f"{i}. {x}") for i,x in enumerate(m.get("architecture_or_workflow", []),1)]
-                st.write("**Tradeoffs**", " | ".join(m.get("tradeoffs", [])))
-                st.write("**Failure modes**", " | ".join(m.get("failure_modes", [])))
-                st.write("**Language upgrades**"); [st.write("• "+x) for x in m.get("language_upgrade", [])]
-                st.info("Candidate bridge: " + m.get("candidate_bridge", ""))
-                st.error("Truth boundary: " + m.get("red_line", ""))
-                st.write("**Practice prompt**", m.get("practice_prompt", ""))
-                st.write("**Gold-standard outline**"); [st.write("• "+x) for x in m.get("gold_standard_answer_outline", [])]
+    elif current_step == "sme_training":
+        if not ordered_comps:
+            st.info("No competencies were returned for this role.")
+        else:
+            st.progress(trained_done / trained_total if trained_total else 0.0,
+                        text=f"{trained_done} of {trained_total} competencies trained")
+            st.markdown("### Training checklist")
+            for pos, (comp_idx, comp) in enumerate(ordered_comps):
+                name = comp.get("name") or f"Competency {pos + 1}"
+                risk = comp.get("interview_risk", "")
+                if comp_idx in trained_modules:
+                    with st.expander(f"✅ Trained — {name} ({risk} risk)"):
+                        m = trained_modules[comp_idx]
+                        st.write("**What it means**", m.get("what_it_means", ""))
+                        st.write("**Why the role cares**", m.get("why_the_role_cares", ""))
+                        st.write("**How an SME thinks**"); [st.write("• "+x) for x in m.get("how_an_sme_thinks", [])]
+                        st.write("**Architecture / workflow**"); [st.write(f"{i}. {x}") for i,x in enumerate(m.get("architecture_or_workflow", []),1)]
+                        st.write("**Tradeoffs**", " | ".join(m.get("tradeoffs", [])))
+                        st.write("**Failure modes**", " | ".join(m.get("failure_modes", [])))
+                        st.write("**Language upgrades**"); [st.write("• "+x) for x in m.get("language_upgrade", [])]
+                        st.info("Candidate bridge: " + m.get("candidate_bridge", ""))
+                        st.error("Truth boundary: " + m.get("red_line", ""))
+                        st.write("**Practice prompt**", m.get("practice_prompt", ""))
+                        st.write("**Gold-standard outline**"); [st.write("• "+x) for x in m.get("gold_standard_answer_outline", [])]
+                elif pos == trained_done:
+                    st.markdown(f"**▶ Up next — {name}** ({risk} risk)")
+                else:
+                    st.caption(f"🔒 Locked — {name} ({risk} risk)")
 
-    with tabs[4]:
+            if trained_done < trained_total:
+                current_idx, current_comp = ordered_comps[trained_done]
+                st.markdown(f"### Generate module: {current_comp.get('name', '')}")
+                if st.button("Generate SME Module", key="train"):
+                    try:
+                        with st.spinner("Building module…"):
+                            st.session_state.trained_modules[current_idx] = training_module(analysis, current_comp, ctx)
+                        st.rerun()
+                    except Exception as e: logger.exception("training_module"); st.error(str(e))
+            else:
+                st.success("All competencies trained.")
+
+    elif current_step == "interview":
         st.markdown("### Interviewer model")
         st.write(f"**Archetype:** {persona.get('persona_archetype','')}  |  **Seniority:** {persona.get('seniority','')}")
         st.write("**Style:** " + persona.get("style", ""))
@@ -481,7 +585,7 @@ if analysis:
                     st.rerun()
                 except Exception as e: logger.exception("voice_grade"); st.error(str(e))
 
-    with tabs[5]:
+    elif current_step == "sources_battle_card":
         st.markdown("### Evidence-backed technical sources")
         topic = st.text_input("Research a technical claim/topic", placeholder="e.g. MCP tool orchestration, RAG evaluation")
         if st.button("Find authoritative sources") and topic.strip():

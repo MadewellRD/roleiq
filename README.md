@@ -43,6 +43,12 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 
 If `RoleIQ_DB_KEY` is unset, RoleIQ generates a throwaway key for that process only and warns loudly — anything saved becomes unreadable the moment the app restarts. There is no key-rotation or re-encryption tool; losing the key means deleting `roleiq.db` and starting fresh, which is an acceptable tradeoff for a single-user local tool. `roleiq.log` (diagnostic error/exception logging — see below) is **not** encrypted like the database is.
 
+## Guided flow
+
+RoleIQ is structured as a guided course, not a free-form dashboard. After Build, a step tracker (Readiness Map → Role Context → Experience Graph → SME Training → Interview → Sources & Battle Card) drives navigation — Back/Next plus a "Recommended next" hint guide the default path, while every step past Build stays freely clickable. Role Context is omitted from the tracker entirely when `RoleIQ_ROLE_CONTEXT_ENABLED` is off, rather than showing as an empty step.
+
+SME Training specifically is sequential: competencies are trained in order of interview risk (High → Medium → Low), one at a time — the next only unlocks once the current one has a generated module, and every completed module stays reviewable. This is deliberately in-memory only (`st.session_state`), not persisted to `roleiq.db`, matching the app's current single-session, no-reload-resume design (see "Data at rest" above).
+
 ## Included
 
 - PDF/DOCX/TXT/MD JD and resume ingestion
