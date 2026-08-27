@@ -46,6 +46,20 @@ No login, no session isolation beyond one Streamlit browser tab, no remote bindi
 
 All 10 LLM-calling functions wrap user-supplied content in `<untrusted_input source="...">` tags plus a system-prompt instruction to treat tagged content as data, never instructions. Explicitly documented as best-effort, not a hard boundary — a sufficiently crafted payload could still resemble the tag itself; the mitigation is a real, tested reduction in attack surface, not a claimed elimination of it.
 
+## Risk register
+
+Live risks as of this writing, scored qualitatively (Low/Medium/High likelihood and impact) since there's no incident history to derive real frequencies from. Resolved risks from earlier in this protocol run (the wizard's missing test coverage, the absence of any branch/PR workflow) are cross-referenced to the GL id that closed them rather than re-listed as live.
+
+| Risk | Likelihood | Impact | Mitigation | Status |
+|---|---|---|---|---|
+| GitHub Actions billing lock leaves remote CI red | Medium (external, ongoing until account issue clears) | Medium | Local pre-push hook (`scripts/pre-push`) enforces the same checks; remote CI resumes automatically once resolved | Live, mitigated |
+| `RoleIQ_DB_KEY` unset -> ephemeral key -> data unreadable after restart | Medium (easy to forget on first setup) | High (all prior sessions unrecoverable) | Loud startup warning (`db_crypto.py`); documented in README's "Data at rest" and `.env.example` | Live, accepted (see ADR-05) |
+| No timeout on AI provider calls -- a hung request blocks the UI indefinitely | Medium (network/provider hiccups happen) | Medium (user has no feedback beyond a spinner) | None yet | Live, tracked as GL-24 |
+| No dependency CVE scan has ever been run against the exact pinned versions | Unknown until scanned | Unknown until scanned | Exact-pin discipline already closes the unbounded-drift risk | Live, tracked as GL-27 |
+| Content-derived `candidate_id()` could collide across two different real people with byte-identical resume text | Low (single-user local tool, not realistic at this scope) | Low today; would become real if RoleIQ ever went multi-user | None -- accepted by design (see ADR-06) | Live, accepted |
+| Zero PR history meant no independent review ever caught a shipped defect | N/A, resolved | N/A, resolved | Branch-per-task + PR-per-change adopted this pass | Resolved -- GL-01 |
+| Wizard UI (newest, most complex code) had zero permanent test coverage | N/A, resolved | N/A, resolved | Committed `AppTest` integration suite | Resolved -- GL-10 |
+
 ## What is not yet decided
 
 Everything in this file describes decisions already made. It does not yet contain a decision about deployment topology, versioning/release strategy, or whether the single-provider-per-run model should ever change — these are open, not implicitly resolved by omission, and Phase 3/4 should treat them as such.
