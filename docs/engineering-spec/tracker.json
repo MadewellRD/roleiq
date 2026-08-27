@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T22:43:03Z",
+  "generated_at": "2026-08-27T22:47:34Z",
   "milestones": [
     {
       "id": "M1",
@@ -350,13 +350,13 @@
       "title": "Add a clean-install check to local CI (scripts/pre-push) so a requirements.txt regression can't pass silently",
       "milestone": "M6",
       "sprint": 6,
-      "status": "todo",
+      "status": "done",
       "acceptance": "scripts/pre-push fails if requirements-dev.txt can't resolve/install cleanly, verified by deliberately breaking a pin and confirming the hook catches it.",
       "depends_on": [],
       "source": "sdlc:ci-failure-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Local hook currently only checks against whatever's already in .venv, not a clean install."
+      "pr": 33,
+      "evidence": "PR #33, merged e1c31e5. scripts/pre-push now runs `pip install --dry-run -r requirements-dev.txt` first. Verified by deliberately breaking pydantic's pin to a nonexistent version: hook failed and blocked (exit 1); restoring the pin passed cleanly."
     },
     {
       "id": "GL-24",
@@ -700,6 +700,12 @@
       "message": "GL-22: capture uncaught top-level exceptions in roleiq.log (#32)",
       "date": "2026-08-27T22:43:03Z",
       "task": "GL-22"
+    },
+    {
+      "sha": "e1c31e5",
+      "message": "GL-23: add a clean-install check to scripts/pre-push (#33)",
+      "date": "2026-08-27T22:47:34Z",
+      "task": "GL-23"
     }
   ]
 }
