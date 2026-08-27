@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T20:21:07Z",
+  "generated_at": "2026-08-27T20:49:12Z",
   "milestones": [
     {
       "id": "M1",
@@ -174,7 +174,7 @@
       "title": "Commit a real, repeatable AppTest-driven wizard integration test",
       "milestone": "M3",
       "sprint": 3,
-      "status": "todo",
+      "status": "done",
       "acceptance": "pytest runs a committed test file driving the actual app via AppTest through Build -> wizard navigation -> SME Training sequential lock, mocked AI calls, no live key required.",
       "depends_on": [
         "GL-06",
@@ -182,36 +182,36 @@
       ],
       "source": "sdlc:test-strategy-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. An ad hoc version of exactly this was run once this session to verify the wizard, then deleted, never committed. Also raised by sdlc:verification-desk, web:web-testing-qa-desk."
+      "pr": 20,
+      "evidence": "PR #20, merged 93f8c66. 5 new AppTest tests driving real button clicks."
     },
     {
       "id": "GL-11",
       "title": "Add test coverage for F7 Interview simulation (grade_answer, adaptive_next, synthesize_question, SME-language matching) -- currently zero coverage",
       "milestone": "M3",
       "sprint": 3,
-      "status": "todo",
+      "status": "done",
       "acceptance": "Each of the four functions has at least one test exercising its logic with a mocked AI response.",
       "depends_on": [
         "GL-06"
       ],
       "source": "sdlc:test-strategy-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Also raised by sdlc:verification-desk."
+      "pr": 21,
+      "evidence": "PR #21, merged ea12003. Return-value and history-window-slicing coverage for grade_answer/adaptive_next/synthesize_question."
     },
     {
       "id": "GL-12",
       "title": "Add test coverage for F3 Role Context and F5 interviewer persona modeling -- currently zero coverage",
       "milestone": "M3",
       "sprint": 3,
-      "status": "todo",
+      "status": "done",
       "acceptance": "A test exercises the ROLE_CONTEXT_ENABLED on/off branches and the persona-modeling call path with mocked responses.",
       "depends_on": [],
       "source": "sdlc:test-strategy-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Also raised by sdlc:verification-desk."
+      "pr": 22,
+      "evidence": "PR #22, merged 2cfa453. role_context()/interviewer_model() unit tests plus end-to-end AppTest coverage of the ROLE_CONTEXT_ENABLED branch."
     },
     {
       "id": "GL-13",
@@ -622,6 +622,24 @@
       "message": "Reset provider_healthy when a later AI call fails after an earlier success (#19)",
       "date": "2026-08-27T20:21:07Z",
       "task": "GL-09"
+    },
+    {
+      "sha": "93f8c66",
+      "message": "Commit a real, repeatable AppTest-driven wizard integration test (#20)",
+      "date": "2026-08-27T20:36:38Z",
+      "task": "GL-10"
+    },
+    {
+      "sha": "ea12003",
+      "message": "Add test coverage for grade_answer, adaptive_next, synthesize_question (#21)",
+      "date": "2026-08-27T20:44:16Z",
+      "task": "GL-11"
+    },
+    {
+      "sha": "2cfa453",
+      "message": "Add test coverage for F3 (Role Context) and F5 (interviewer persona) (#22)",
+      "date": "2026-08-27T20:49:12Z",
+      "task": "GL-12"
     }
   ]
 }
