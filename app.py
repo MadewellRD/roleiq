@@ -1,5 +1,5 @@
 import contextlib, os, re, json, sqlite3, hashlib, textwrap, tempfile, logging
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -76,7 +76,7 @@ def candidate_id(resume: str) -> str:
 
 def save_candidate(resume: str, name: str, graph: Dict[str, Any]):
     cid = candidate_id(resume)
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     with contextlib.closing(db()) as conn:
         conn.execute("""INSERT INTO candidates(id,name,resume,experience_graph,created_at,updated_at)
                         VALUES(?,?,?,?,?,?)
@@ -103,7 +103,7 @@ def load_candidate(cid: str):
 
 def save_session(sid: str, cid: str, role: str, company: str, jd: str,
                  analysis: Dict[str, Any], context: Dict[str, Any], history: List[Dict[str, Any]]):
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     with contextlib.closing(db()) as conn:
         conn.execute("""INSERT INTO sessions(id,candidate_id,role,company,jd,analysis,context,history,created_at,updated_at)
                         VALUES(?,?,?,?,?,?,?,?,?,?)
