@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T23:01:18Z",
+  "generated_at": "2026-08-27T23:15:43Z",
   "milestones": [
     {
       "id": "M1",
@@ -343,7 +343,7 @@
       "source": "web:web-observability-desk",
       "blocked_on": null,
       "pr": 32,
-      "evidence": "PR #32, merged 4d57907. Verified hook: Streamlit's script runner logs an uncaught top-level exception through streamlit.error_util, a logger Streamlit itself sets propagate=False on -- so root-logger handlers and sys.excepthook (never reached, Streamlit intercepts first) both missed it. Fixed by attaching app.py's RotatingFileHandler directly to that named logger. Confirmed via AppTest: message absent from roleiq.log before the fix, present after. Two committed regression tests (tests/test_uncaught_exception_logging.py)."
+      "evidence": "PR #32 (attach a handler to streamlit.error_util), corrected by PR #37 (merged 14043ec). Regression testing while working a later GL item found PR #32's handler never actually fired: Streamlit's _log_uncaught_app_exception skips its _LOGGER.error() call whenever rich is importable (always true here) and prints a rich console traceback instead. Fixed by setting logger.enableRich = false in .streamlit/config.toml (a public, documented option), forcing the plain logging path every time. Re-verified: message absent from roleiq.log with the bug, present every time (3 repeated runs) with the fix. tests/test_uncaught_exception_logging.py now passes deterministically."
     },
     {
       "id": "GL-23",
@@ -724,6 +724,12 @@
       "message": "GL-26: add a Troubleshooting section to README.md (#36)",
       "date": "2026-08-27T23:01:18Z",
       "task": "GL-26"
+    },
+    {
+      "sha": "14043ec",
+      "message": "GL-22 fix: the merged hook was silently bypassed by rich (#37)",
+      "date": "2026-08-27T23:15:43Z",
+      "task": "GL-22"
     }
   ]
 }
