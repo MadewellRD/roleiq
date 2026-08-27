@@ -34,9 +34,12 @@ Model selection, in order of precedence:
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 from typing import Any, Dict, Iterator, List, Optional, Tuple
+
+_logger = logging.getLogger("roleiq")
 
 OPENAI_DEFAULT_MODEL = "gpt-5.6-luna"
 ANTHROPIC_DEFAULT_MODEL = "claude-sonnet-5"
@@ -242,6 +245,15 @@ def _anthropic_text(system: str, user: str, web: bool, max_tokens: int) -> Tuple
         if stop != "pause_turn":
             break
         messages = messages + [{"role": "assistant", "content": response.content}]
+    else:
+        # Every iteration kept returning pause_turn -- the continuation cap
+        # was actually hit rather than the turn completing naturally. Not
+        # raised as TruncatedResponse: the cause is different (continuation
+        # cap, not the token cap) and this still returns usable partial text.
+        _logger.warning(
+            "Anthropic pause_turn continuation cap (%d) reached; reply may be incomplete.",
+            _MAX_PAUSE_CONTINUATIONS,
+        )
 
     return "\n".join(collected).strip(), truncated
 

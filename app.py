@@ -349,6 +349,8 @@ if analysis:
         for x in analysis.get("training_priorities", []): st.write("• " + x)
 
     with tabs[1]:
+        if ctx.get("status") == "deferred":
+            st.info("Role Context Plane is disabled (set RoleIQ_ROLE_CONTEXT_ENABLED=1 to enable public company/technical research).")
         st.markdown("**Company context**")
         for x in ctx.get("company_context", []): st.write("• " + x)
         st.markdown("**Technical signals**")
@@ -440,7 +442,7 @@ if analysis:
             st.write(f"**Exercise:** {n.get('exercise','')}")
             st.write("**Success criteria:** " + "; ".join(n.get("success_criteria", [])))
         st.markdown("### Voice interview")
-        st.caption("One-day MVP mode: record a turn, transcribe it, grade it, and optionally hear the interviewer response. Full low-latency Realtime/WebRTC can replace this transport later.")
+        st.caption("One-day MVP mode: record a turn, transcribe it, and grade it. Voice output (hearing the interviewer) is not implemented; read the graded feedback below. Full low-latency Realtime/WebRTC can replace this transport later.")
         if not ai_provider.voice_available():
             st.info("Recorded answers require OPENAI_API_KEY — Anthropic exposes no speech-to-text API. Typed answers above use the active provider.")
         else:
