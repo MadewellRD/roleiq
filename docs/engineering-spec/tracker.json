@@ -1,6 +1,6 @@
 {
   "project": "RoleIQ",
-  "generated_at": "2026-08-27T22:53:34Z",
+  "generated_at": "2026-08-27T22:57:40Z",
   "milestones": [
     {
       "id": "M1",
@@ -376,7 +376,7 @@
       "title": "Add a version string to the app and tag the commit closing this sprint",
       "milestone": "M7",
       "sprint": 7,
-      "status": "todo",
+      "status": "done",
       "acceptance": "A version string exists next to APP_TITLE in app.py; git tag shows at least one tag.",
       "depends_on": [
         "GL-01",
@@ -406,8 +406,8 @@
       ],
       "source": "sdlc:release-operations-desk",
       "blocked_on": null,
-      "pr": null,
-      "evidence": "Not started. Zero git tags exist today (confirmed Phase 0)."
+      "pr": 35,
+      "evidence": "PR #35, merged 322e079. APP_VERSION = \"1.93.0\" added next to APP_TITLE, rendered in the header caption (verified via AppTest). Annotated git tag v1.93.0 created and pushed on this commit -- first tag in repo history (zero existed as of Phase 0)."
     },
     {
       "id": "GL-26",
@@ -712,6 +712,12 @@
       "message": "GL-24: set an explicit timeout on both AI provider clients (#34)",
       "date": "2026-08-27T22:53:34Z",
       "task": "GL-24"
+    },
+    {
+      "sha": "322e079",
+      "message": "GL-25: add a version string to the app (#35)",
+      "date": "2026-08-27T22:57:40Z",
+      "task": "GL-25"
     }
   ]
 }
