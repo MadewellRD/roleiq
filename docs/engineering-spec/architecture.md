@@ -55,10 +55,19 @@ Live risks as of this writing, scored qualitatively (Low/Medium/High likelihood 
 | GitHub Actions billing lock leaves remote CI red | Medium (external, ongoing until account issue clears) | Medium | Local pre-push hook (`scripts/pre-push`) enforces the same checks; remote CI resumes automatically once resolved | Live, mitigated |
 | `RoleIQ_DB_KEY` unset -> ephemeral key -> data unreadable after restart | Medium (easy to forget on first setup) | High (all prior sessions unrecoverable) | Loud startup warning (`db_crypto.py`); documented in README's "Data at rest" and `.env.example` | Live, accepted (see ADR-05) |
 | No timeout on AI provider calls -- a hung request blocks the UI indefinitely | N/A, resolved | N/A, resolved | Both clients now pass `RoleIQ_AI_TIMEOUT_SECONDS` (default 60s) at construction; verified with a simulated hung call | Resolved -- GL-24 |
-| No dependency CVE scan has ever been run against the exact pinned versions | Unknown until scanned | Unknown until scanned | Exact-pin discipline already closes the unbounded-drift risk | Live, tracked as GL-27 |
+| A future dependency pin could carry a known CVE and go unnoticed | Low (scanned clean; would need a re-scan after any pin bump) | Depends on the CVE | `pip-audit` run against `requirements.txt`/`requirements-dev.txt` as of 2026-08-27, see "Dependency scan log" below; no CI step re-runs this automatically yet | Resolved -- GL-27 |
 | Content-derived `candidate_id()` could collide across two different real people with byte-identical resume text | Low (single-user local tool, not realistic at this scope) | Low today; would become real if RoleIQ ever went multi-user | None -- accepted by design (see ADR-06) | Live, accepted |
 | Zero PR history meant no independent review ever caught a shipped defect | N/A, resolved | N/A, resolved | Branch-per-task + PR-per-change adopted this pass | Resolved -- GL-01 |
 | Wizard UI (newest, most complex code) had zero permanent test coverage | N/A, resolved | N/A, resolved | Committed `AppTest` integration suite | Resolved -- GL-10 |
+
+## Dependency scan log
+
+| Date | Tool | Scope | Result |
+|---|---|---|---|
+| 2026-08-27 | `pip-audit` 2.10.1 | `requirements.txt` (8 direct pins) | No known vulnerabilities found |
+| 2026-08-27 | `pip-audit` 2.10.1 | `requirements-dev.txt` (`requirements.txt` + `pytest==9.1.1`) | No known vulnerabilities found |
+
+`pip-audit` resolves the full dependency tree (not just the 8 direct pins) against the PyPI/OSV advisory database, so this covers transitive dependencies too. Not wired into CI or the pre-push hook -- this is a point-in-time scan, not a recurring check, so it goes stale as soon as any pin moves. Re-run `pip install pip-audit && pip-audit -r requirements.txt` after any dependency bump and update this table.
 
 ## What is not yet decided
 
