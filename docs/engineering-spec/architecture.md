@@ -59,6 +59,7 @@ Live risks as of this writing, scored qualitatively (Low/Medium/High likelihood 
 | Content-derived `candidate_id()` could collide across two different real people with byte-identical resume text | Low (single-user local tool, not realistic at this scope) | Low today; would become real if RoleIQ ever went multi-user | None -- accepted by design (see ADR-06) | Live, accepted |
 | Zero PR history meant no independent review ever caught a shipped defect | N/A, resolved | N/A, resolved | Branch-per-task + PR-per-change adopted this pass | Resolved -- GL-01 |
 | Wizard UI (newest, most complex code) had zero permanent test coverage | N/A, resolved | N/A, resolved | Committed `AppTest` integration suite | Resolved -- GL-10 |
+| No Content-Security-Policy header is served -- a reflected/stored XSS in this app or a dependency has no browser-side containment | Low (single-user, local-only, `127.0.0.1`-bound per ADR-04 -- no untrusted third party can reach the page to exploit it) | Medium if it were ever exploitable (candidate PII/interview content is in the DOM) | None. Streamlit has no built-in CSP option (confirmed: no such config key exists in `streamlit/config.py`); adding one requires a custom Tornado request handler that isn't worth building for a `127.0.0.1`-only tool. Accepted, not planned -- see GL-28 | Live, accepted |
 
 ## Dependency scan log
 
